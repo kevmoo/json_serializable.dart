@@ -5,6 +5,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:build/build.dart';
+import 'package:code_builder/code_builder.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:source_helper/source_helper.dart';
 
@@ -16,10 +17,10 @@ import 'unsupported_type_error.dart';
 import 'utils.dart';
 
 class CreateFactoryResult {
-  final String output;
+  final Method method;
   final Set<String> usedFields;
 
-  CreateFactoryResult(this.output, this.usedFields);
+  CreateFactoryResult(this.method, this.usedFields);
 }
 
 mixin DecodeHelper implements HelperCore {
@@ -28,29 +29,6 @@ mixin DecodeHelper implements HelperCore {
     Map<String, String> unavailableReasons,
   ) {
     assert(config.createFactory);
-    final buffer = StringBuffer();
-
-    final mapType = config.anyMap ? 'Map' : 'Map<String, dynamic>';
-    buffer.write(
-      '$targetClassReference '
-      '${prefix}FromJson${genericClassArgumentsImpl(withConstraints: true)}'
-      '($mapType json',
-    );
-
-    if (config.genericArgumentFactories) {
-      for (var arg in element.typeParameters) {
-        final helperName = fromJsonForType(
-          arg.instantiate(nullabilitySuffix: NullabilitySuffix.none),
-        );
-
-        buffer.write(', ${arg.name} Function(Object? json) $helperName');
-      }
-      if (element.typeParameters.isNotEmpty) {
-        buffer.write(',');
-      }
-    }
-
-    buffer.write(')');
 
     final fromJsonLines = <String>[];
 
@@ -155,20 +133,58 @@ mixin DecodeHelper implements HelperCore {
       fromJsonLines.add(sectionBuffer.toString());
     }
 
-    if (fromJsonLines.length == 1) {
-      buffer
-        ..write('=>')
-        ..write(fromJsonLines.single);
-    } else {
-      buffer
-        ..write('{')
-        ..writeAll(fromJsonLines.take(fromJsonLines.length - 1))
-        ..write('return ')
-        ..write(fromJsonLines.last)
-        ..write('}');
-    }
+    final method = Method((m) {
+      m
+        ..name = '${prefix}FromJson'
+        ..returns = refer(targetClassReference)
+        ..types.addAll(
+          element.typeParameters.map((t) {
+            final bound = t.bound;
+            return refer(
+              bound != null
+                  ? '${t.name} extends ${bound.getDisplayString()}'
+                  : t.name!,
+            );
+          }),
+        )
+        ..requiredParameters.add(
+          Parameter(
+            (p) => p
+              ..name = 'json'
+              ..type = refer(config.anyMap ? 'Map' : 'Map<String, dynamic>'),
+          ),
+        );
 
-    return CreateFactoryResult(buffer.toString(), data.usedCtorParamsAndFields);
+      if (config.genericArgumentFactories) {
+        for (var arg in element.typeParameters) {
+          final helperName = fromJsonForType(
+            arg.instantiate(nullabilitySuffix: NullabilitySuffix.none),
+          );
+          m.requiredParameters.add(
+            Parameter(
+              (p) => p
+                ..name = helperName
+                ..type = refer('${arg.name} Function(Object? json)'),
+            ),
+          );
+        }
+      }
+
+      if (fromJsonLines.length == 1) {
+        m
+          ..lambda = true
+          ..body = Code(fromJsonLines.single);
+      } else {
+        final bodyBuffer = StringBuffer();
+        for (var line in fromJsonLines.take(fromJsonLines.length - 1)) {
+          bodyBuffer.write(line);
+        }
+        bodyBuffer.write('return ${fromJsonLines.last}');
+        m.body = Code(bodyBuffer.toString());
+      }
+    });
+
+    return CreateFactoryResult(method, data.usedCtorParamsAndFields);
   }
 
   Iterable<String> _checkKeys(Iterable<FieldElement> accessibleFields) sync* {

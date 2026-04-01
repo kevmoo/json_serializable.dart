@@ -13,7 +13,7 @@ Model _$ModelFromJson(Map<String, dynamic> json) => Model(
   lastName: json['LAST_NAME'] as String,
 );
 
-const _$ModelFieldMap = <String, String>{
+const Map<String, String> _$ModelFieldMap = {
   'firstName': 'first-name',
   'lastName': 'LAST_NAME',
 };
@@ -23,7 +23,7 @@ Map<String, dynamic> _$ModelToJson(Model instance) => <String, dynamic>{
   'LAST_NAME': instance.lastName,
 };
 
-const _$PrivateModelFieldMap = <String, String>{'fullName': 'full-name'};
+const Map<String, String> _$PrivateModelFieldMap = {'fullName': 'full-name'};
 
 Map<String, dynamic> _$PrivateModelToJson(_PrivateModel instance) =>
     <String, dynamic>{'full-name': instance.fullName};

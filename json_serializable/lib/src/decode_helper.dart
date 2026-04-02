@@ -7,7 +7,6 @@ import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:source_helper/source_helper.dart';
 
 import 'helper_core.dart';
 import 'json_literal_generator.dart';
@@ -30,7 +29,8 @@ mixin DecodeHelper implements HelperCore {
   ) {
     assert(config.createFactory);
 
-    final fromJsonLines = <String>[];
+    Expression? lambdaExpr;
+    final fromJsonLines = <Code>[];
 
     String deserializeFun(
       String paramOrFieldName, {
@@ -59,6 +59,8 @@ mixin DecodeHelper implements HelperCore {
       deserializeFun,
     );
 
+    final renderedCtor = data.content.accept(DartEmitter()).toString();
+
     final checks = _checkKeys(
       accessibleFields.values.where(
         (fe) => data.usedCtorParamsAndFields.contains(fe.name),
@@ -66,71 +68,120 @@ mixin DecodeHelper implements HelperCore {
     ).toList();
 
     if (config.checked) {
-      final classLiteral = escapeDartString(element.name!);
-
-      final sectionBuffer = StringBuffer()
-        ..write('''
-  \$checkedCreate(
-    $classLiteral,
-    json,
-    (\$checkedConvert) {\n''')
-        ..write(checks.join())
-        ..write('''
-    final val = ${data.content};''');
-
-      for (final fieldName in data.fieldsToSet) {
-        sectionBuffer.writeln();
-        final fieldValue = accessibleFields[fieldName]!;
-        final safeName = safeNameAccess(fieldValue);
-        sectionBuffer
-          ..write('''
-    \$checkedConvert($safeName, (v) => ''')
-          ..write('val.$fieldName = ')
-          ..write(_deserializeForField(fieldValue, checkedProperty: true));
-
-        final readValueFunc = jsonKeyFor(fieldValue).readValueFunctionName;
-        if (readValueFunc != null) {
-          sectionBuffer.writeln(',readValue: $readValueFunc,');
-        }
-
-        sectionBuffer.write(');');
-      }
-
-      sectionBuffer.write('''\n    return val;
-  }''');
-
       final fieldKeyMap = Map.fromEntries(
         data.usedCtorParamsAndFields
             .map((k) => MapEntry(k, nameAccess(accessibleFields[k]!)))
             .where((me) => me.key != me.value),
       );
 
-      String fieldKeyMapArg;
-      if (fieldKeyMap.isEmpty) {
-        fieldKeyMapArg = '';
-      } else {
-        final mapLiteral = jsonMapAsDart(fieldKeyMap);
-        fieldKeyMapArg = ', fieldKeyMap: const $mapLiteral';
-      }
+      final closureBody = Block(
+        (b) => b
+          ..statements.addAll(checks.map((c) => Code(c.trim())))
+          ..statements.add(Code('final val = $renderedCtor;'))
+          ..statements.addAll(
+            data.fieldsToSet.map((fieldName) {
+              final fieldValue = accessibleFields[fieldName]!;
+              final safeName = safeNameAccess(fieldValue);
+              final readValueFunc = jsonKeyFor(
+                fieldValue,
+              ).readValueFunctionName;
+              final deserializeCall = _deserializeForField(
+                fieldValue,
+                checkedProperty: true,
+              );
 
-      sectionBuffer
-        ..write(fieldKeyMapArg)
-        ..write(',);');
-      fromJsonLines.add(sectionBuffer.toString());
+              return refer('\$checkedConvert')
+                  .call(
+                    [
+                      CodeExpression(Code(safeName)),
+                      Method(
+                        (m) => m
+                          ..requiredParameters.add(
+                            Parameter((p) => p..name = 'v'),
+                          )
+                          ..lambda = true
+                          ..body = Code('val.$fieldName = $deserializeCall'),
+                      ).closure,
+                    ],
+                    {
+                      if (readValueFunc != null)
+                        'readValue': refer(readValueFunc),
+                    },
+                  )
+                  .statement;
+            }),
+          )
+          ..statements.add(refer('val').returned.statement),
+      );
+
+      final checkedCreateCall = refer('\$checkedCreate').call(
+        [
+          literal(element.name!),
+          refer('json'),
+          Method(
+            (m) => m
+              ..requiredParameters.add(
+                Parameter((p) => p..name = '\$checkedConvert'),
+              )
+              ..body = closureBody,
+          ).closure,
+        ],
+        {
+          if (fieldKeyMap.isNotEmpty)
+            'fieldKeyMap': CodeExpression(
+              Code('const ${jsonMapAsDart(fieldKeyMap)}'),
+            ),
+        },
+      );
+
+      lambdaExpr = checkedCreateCall;
     } else {
-      fromJsonLines.addAll(checks);
+      if (data.fieldsToSet.isEmpty) {
+        if (checks.isEmpty) {
+          lambdaExpr = data.content;
+        } else {
+          fromJsonLines
+            ..addAll(checks.map((c) => Code(c.trim())))
+            ..add(data.content.returned.statement);
+        }
+      } else {
+        final fieldCache = {
+          for (final field in data.fieldsToSet) field: deserializeFun(field),
+        };
 
-      final sectionBuffer = StringBuffer()
-        ..write('''
-  ${data.content}''');
-      for (final field in data.fieldsToSet) {
-        sectionBuffer
-          ..writeln()
-          ..write('    ..$field = ')
-          ..write(deserializeFun(field));
+        final hasClashingQuestionMark = fieldCache.values.any(
+          (v) => v.trim().endsWith('?'),
+        );
+
+        if (hasClashingQuestionMark) {
+          fromJsonLines
+            ..addAll(checks.map((c) => Code(c.trim())))
+            ..add(
+              Code(
+                'final val = '
+                '${data.content.accept(DartEmitter())};',
+              ),
+            );
+          for (final field in data.fieldsToSet) {
+            fromJsonLines.add(Code('val.$field = ${fieldCache[field]};'));
+          }
+          fromJsonLines.add(refer('val').returned.statement);
+        } else {
+          final expr = data.fieldsToSet.fold<Expression>(
+            data.content,
+            (current, field) =>
+                current.cascade('$field = ${fieldCache[field]}'),
+          );
+
+          if (checks.isEmpty) {
+            lambdaExpr = expr;
+          } else {
+            fromJsonLines
+              ..addAll(checks.map((c) => Code(c.trim())))
+              ..add(expr.returned.statement);
+          }
+        }
       }
-      sectionBuffer.writeln(';');
-      fromJsonLines.add(sectionBuffer.toString());
     }
 
     final method = Method((m) {
@@ -170,17 +221,12 @@ mixin DecodeHelper implements HelperCore {
         }
       }
 
-      if (fromJsonLines.length == 1) {
+      if (lambdaExpr != null) {
         m
           ..lambda = true
-          ..body = Code(fromJsonLines.single);
+          ..body = Code('${lambdaExpr.accept(DartEmitter()).toString()};');
       } else {
-        final bodyBuffer = StringBuffer();
-        for (var line in fromJsonLines.take(fromJsonLines.length - 1)) {
-          bodyBuffer.write(line);
-        }
-        bodyBuffer.write('return ${fromJsonLines.last}');
-        m.body = Code(bodyBuffer.toString());
+        m.body = Block((b) => b.statements.addAll(fromJsonLines));
       }
     });
 
@@ -343,8 +389,8 @@ _ConstructorData _writeConstructorInvocation(
   final ctor = constructorByName(classElement, constructorName);
 
   final usedCtorParamsAndFields = <String>{};
-  final constructorArguments = <FormalParameterElement>[];
-  final namedConstructorArguments = <FormalParameterElement>[];
+  final positionalArgs = <Expression>[];
+  final namedArgs = <String, Expression>{};
 
   for (final arg in ctor.formalParameters) {
     if (!availableConstructorParameters.contains(arg.name)) {
@@ -364,59 +410,49 @@ _ConstructorData _writeConstructorInvocation(
       continue;
     }
 
-    // TODO: validate that the types match!
+    final value = deserializeForField(arg.name!, ctorParam: arg);
+    final expr = CodeExpression(Code(value));
     if (arg.isNamed) {
-      namedConstructorArguments.add(arg);
+      namedArgs[arg.name!] = expr;
     } else {
-      constructorArguments.add(arg);
+      positionalArgs.add(expr);
     }
     usedCtorParamsAndFields.add(arg.name!);
   }
 
-  // fields that aren't already set by the constructor and that aren't final
   final remainingFieldsForInvocationBody = writableFields.toSet().difference(
     usedCtorParamsAndFields,
   );
 
-  final constructorExtra = constructorName.isEmpty ? '' : '.$constructorName';
+  final typeArguments = classElement.typeParameters
+      .map((t) => refer(t.name!))
+      .toList();
 
-  final buffer = StringBuffer()
-    ..write(
-      '$className'
-      '${genericClassArguments(classElement, false)}'
-      '$constructorExtra(',
-    )
-    ..writeAll(
-      constructorArguments.map((paramElement) {
-        final content = deserializeForField(
-          paramElement.name!,
-          ctorParam: paramElement,
-        );
-        return '      $content,\n';
-      }),
-    )
-    ..writeAll(
-      namedConstructorArguments.map((paramElement) {
-        final value = deserializeForField(
-          paramElement.name!,
-          ctorParam: paramElement,
-        );
-        return '      ${paramElement.name!}: $value,\n';
-      }),
-    )
-    ..write(')');
+  Expression constructorInvocation;
+  if (constructorName.isEmpty) {
+    constructorInvocation = refer(
+      className!,
+    ).newInstance(positionalArgs, namedArgs, typeArguments);
+  } else {
+    constructorInvocation = refer(className!).newInstanceNamed(
+      constructorName,
+      positionalArgs,
+      namedArgs,
+      typeArguments,
+    );
+  }
 
   usedCtorParamsAndFields.addAll(remainingFieldsForInvocationBody);
 
   return _ConstructorData(
-    buffer.toString(),
+    constructorInvocation,
     remainingFieldsForInvocationBody,
     usedCtorParamsAndFields,
   );
 }
 
 class _ConstructorData {
-  final String content;
+  final Expression content;
   final Set<String> fieldsToSet;
   final Set<String> usedCtorParamsAndFields;
 

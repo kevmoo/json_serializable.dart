@@ -5,6 +5,7 @@ targets:
       source_gen|combining_builder:
         options:
           ignore_for_file:
+          - cascade_invocations
           - lines_longer_than_80_chars
           # Only for the JSON literal output file
           - text_direction_code_point_in_literal

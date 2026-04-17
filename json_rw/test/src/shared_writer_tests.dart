@@ -59,4 +59,18 @@ void declareWriterTests(
 
     check(result).equals('[true,false,null]');
   });
+
+  test('write strings with escaping', () {
+    final result = runTest((writer) {
+      writer
+        ..beginArray()
+        ..writeString('a"b')
+        ..writeString('a\\b')
+        ..writeString('a\nb')
+        ..writeString('a\tb')
+        ..endArray();
+    });
+
+    check(result).equals('["a\\"b","a\\\\b","a\\nb","a\\tb"]');
+  });
 }

@@ -8,5 +8,7 @@ enum JsonToken {
   number,
   boolean,
   nullToken,
+  comma,
+  colon,
   eof,
 }

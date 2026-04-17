@@ -1,8 +1,10 @@
 import 'src/json_rw_benchmark.dart';
+import 'src/json_rw_chunked_read_benchmark.dart';
 import 'src/json_rw_read_benchmark.dart';
 import 'src/json_rw_utf8_benchmark.dart';
 import 'src/json_rw_utf8_read_benchmark.dart';
 import 'src/json_serializable_benchmark.dart';
+import 'src/json_serializable_chunked_read_benchmark.dart';
 import 'src/json_serializable_read_benchmark.dart';
 import 'src/json_serializable_utf8_benchmark.dart';
 import 'src/json_serializable_utf8_read_benchmark.dart';
@@ -31,6 +33,9 @@ final benchmarks = <String, void Function()>{
   'json_rw_utf8': const JsonRwUtf8Benchmark().report,
   'json_serializable_read': const JsonSerializableReadBenchmark().report,
   'json_rw_read': const JsonRwReadBenchmark().report,
+  'json_rw_chunked_read': const JsonRwChunkedReadBenchmark().report,
+  'json_serializable_chunked_read':
+      const JsonSerializableChunkedReadBenchmark().report,
   'json_serializable_utf8_read':
       const JsonSerializableUtf8ReadBenchmark().report,
   'json_rw_utf8_read': const JsonRwUtf8ReadBenchmark().report,
@@ -43,6 +48,7 @@ final benchmarks = <String, void Function()>{
   'json_serializable_read_small':
       const JsonSerializableReadSmallBenchmark().report,
   'json_rw_read_small': const JsonRwReadSmallBenchmark().report,
+  'json_rw_chunked_read_small': const JsonRwChunkedReadSmallBenchmark().report,
   'json_serializable_utf8_read_small':
       const JsonSerializableUtf8ReadSmallBenchmark().report,
   'json_rw_utf8_read_small': const JsonRwUtf8ReadSmallBenchmark().report,

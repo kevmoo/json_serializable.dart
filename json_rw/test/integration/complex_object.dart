@@ -57,4 +57,6 @@ class ComplexObject {
     }
     return true;
   }
+
+  static ResumableBuilder<ComplexObject> builder() => _$ComplexObjectBuilder();
 }

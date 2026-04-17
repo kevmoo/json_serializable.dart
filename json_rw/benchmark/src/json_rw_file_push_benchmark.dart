@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:json_rw/json_rw.dart';
 
-import '../../test/integration/complex_object.builder.dart';
 import '../../test/integration/complex_object.dart';
 import 'shared.dart';
 
@@ -31,7 +30,7 @@ class JsonRwFilePushBenchmark extends AsyncJsonBenchmarkBase {
         .openRead()
         .transform(utf8.decoder)
         .transform(
-          const JsonReaderConverter<ComplexObject>(ComplexObjectBuilder.new),
+          const JsonReaderConverter<ComplexObject>(ComplexObject.builder),
         )
         .single;
   }

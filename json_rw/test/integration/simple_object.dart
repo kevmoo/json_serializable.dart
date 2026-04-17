@@ -29,4 +29,6 @@ class SimpleObject {
 
   @override
   int get hashCode => value.hashCode;
+
+  static ResumableBuilder<SimpleObject> builder() => _$SimpleObjectBuilder();
 }

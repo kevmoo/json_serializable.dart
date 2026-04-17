@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:json_rw/json_rw.dart';
 import 'package:test/test.dart';
-import 'integration/simple_object.builder.dart';
 import 'integration/simple_object.dart';
 
 void main() {
@@ -23,7 +22,7 @@ void main() {
   test('JsonReaderConverter', () {
     const jsonStr = '{"value":42}';
     const converter = JsonReaderConverter<SimpleObject>(
-      SimpleObjectBuilder.new,
+      SimpleObject.builder,
     );
 
     final obj = converter.convert(jsonStr);
@@ -52,7 +51,7 @@ void main() {
   test('JsonReaderConverter streaming', () async {
     final jsonStream = Stream.fromIterable(['{"value":', '1}', '{"value":2}']);
     const converter = JsonReaderConverter<SimpleObject>(
-      SimpleObjectBuilder.new,
+      SimpleObject.builder,
     );
 
     final objects = await jsonStream.transform(converter).toList();

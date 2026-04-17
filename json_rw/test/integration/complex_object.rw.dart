@@ -150,7 +150,7 @@ class _$ComplexObjectBuilder extends ResumableBuilder<ComplexObject> {
         }
       }
     } catch (e) {
-      if (e is FormatException && e.toString().contains('not ready')) {
+      if (e is NeedsMoreDataException) {
         return false;
       }
       rethrow;

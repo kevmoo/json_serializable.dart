@@ -56,7 +56,7 @@ class _$SimpleObjectBuilder extends ResumableBuilder<SimpleObject> {
         }
       }
     } catch (e) {
-      if (e is FormatException && e.toString().contains('not ready')) {
+      if (e is NeedsMoreDataException) {
         return false;
       }
       rethrow;

@@ -128,11 +128,6 @@ void declareReaderTests(JsonReader Function(String json) createReader) {
   });
 
   test('malformed strings', () {
-    // Unterminated string
-    check(() {
-      createReader('"abc').nextString();
-    }).throws<FormatException>();
-
     // Bad escape
     check(() {
       createReader(r'"\a"').nextString();

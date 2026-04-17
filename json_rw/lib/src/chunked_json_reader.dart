@@ -2,6 +2,36 @@ import 'chunked_lexer.dart';
 import 'json_reader.dart';
 import 'json_token.dart';
 
+/// Exception thrown by [ChunkedJsonReader] when it reaches the end of a chunk
+/// in the middle of a token (like a string or number) and needs more data
+/// to continue.
+///
+/// This exception is intended to be caught by builders or callers that are
+/// driving the chunked reader, to signal that they should fetch more data
+/// and call [ChunkedJsonReader.addChunk] before resuming.
+class NeedsMoreDataException implements Exception {
+  final _NeedsMoreDataReason _reason;
+  const NeedsMoreDataException._(this._reason);
+
+  /// A user-friendly message describing why more data is needed.
+  String get message => _reason.message;
+
+  @override
+  String toString() => 'NeedsMoreDataException: $message';
+}
+
+enum _NeedsMoreDataReason {
+  unexpectedEndOfChunk('Unexpected end of chunk'),
+  partialName('Partial name not ready'),
+  partialString('Partial string not ready'),
+  partialKeyword('Partial keyword not ready'),
+  partialNumber('Partial number not ready'),
+  partialNull('Partial null not ready');
+
+  final String message;
+  const _NeedsMoreDataReason(this.message);
+}
+
 enum _Scope { object, array }
 
 /// A [JsonReader] that processes JSON in chunks.
@@ -51,7 +81,7 @@ class ChunkedJsonReader implements JsonReader {
     return true;
   }
 
-  void _ensureFullToken(String errorMessage) {
+  void _ensureFullToken(_NeedsMoreDataReason reason) {
     while (_lexer.isPartial) {
       if (_onChunkNeeded != null) {
         final next = _onChunkNeeded();
@@ -62,7 +92,7 @@ class ChunkedJsonReader implements JsonReader {
           continue;
         }
       }
-      throw FormatException(errorMessage);
+      throw NeedsMoreDataException._(reason);
     }
   }
 
@@ -70,7 +100,9 @@ class ChunkedJsonReader implements JsonReader {
   JsonToken peek() {
     if (!_ensureToken()) {
       if (_lexer.isPartial) {
-        throw const FormatException('Unexpected end of chunk');
+        throw const NeedsMoreDataException._(
+          _NeedsMoreDataReason.unexpectedEndOfChunk,
+        );
       }
       return JsonToken.eof;
     }
@@ -164,7 +196,7 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.name) {
       throw const FormatException('Expected property name');
     }
-    _ensureFullToken('Partial name not ready');
+    _ensureFullToken(_NeedsMoreDataReason.partialName);
 
     final name = _lexer.stringValue;
     _hasToken = false; // consume string
@@ -184,7 +216,7 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.string) {
       throw const FormatException('Expected string');
     }
-    _ensureFullToken('Partial string not ready');
+    _ensureFullToken(_NeedsMoreDataReason.partialString);
 
     final value = _lexer.stringValue;
     _hasToken = false; // consume
@@ -197,7 +229,7 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.boolean) {
       throw const FormatException('Expected boolean');
     }
-    _ensureFullToken('Partial keyword not ready');
+    _ensureFullToken(_NeedsMoreDataReason.partialKeyword);
 
     final value = _lexer.stringValue == 'true';
     _hasToken = false; // consume
@@ -210,7 +242,7 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.number) {
       throw const FormatException('Expected number');
     }
-    _ensureFullToken('Partial number not ready');
+    _ensureFullToken(_NeedsMoreDataReason.partialNumber);
 
     final value = num.parse(_lexer.stringValue);
     _hasToken = false; // consume
@@ -223,7 +255,7 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.nullToken) {
       throw const FormatException('Expected null');
     }
-    _ensureFullToken('Partial null not ready');
+    _ensureFullToken(_NeedsMoreDataReason.partialNull);
 
     _hasToken = false; // consume
     _afterValue();

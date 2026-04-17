@@ -35,7 +35,7 @@ void main() {
 
       // Now we are at the value "Jo", which is cut off.
       // nextString() should throw because the token is partial.
-      check(reader.nextString).throws<FormatException>();
+      check(reader.nextString).throws<NeedsMoreDataException>();
 
       // Now we add the rest of the string and the rest of the object!
       reader.addChunk('hn", "age": 30}');
@@ -50,11 +50,14 @@ void main() {
       check(reader.hasNext()).isFalse();
       reader.endObject();
     });
+
+    test('unterminated string throws NeedsMoreDataException', () {
+      final reader = ChunkedJsonReader()..addChunk('"abc');
+      check(reader.nextString).throws<NeedsMoreDataException>();
+    });
   });
 
   group('ChunkedJsonReader - Shared Tests', () {
-    declareReaderTests(
-      (json) => ChunkedJsonReader()..addChunk(json),
-    );
+    declareReaderTests((json) => ChunkedJsonReader()..addChunk(json));
   });
 }

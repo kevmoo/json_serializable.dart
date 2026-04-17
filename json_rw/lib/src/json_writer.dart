@@ -1,4 +1,5 @@
-import 'pretty_string_json_writer.dart';
+import 'dart:typed_data';
+import 'bytes_json_writer.dart';
 import 'string_json_writer.dart';
 
 enum IndentType { spaces, tabs }
@@ -8,12 +9,13 @@ abstract class JsonWriter {
     StringSink sink, {
     IndentType? indentType,
     int? indentCount,
-  }) {
-    if (indentType != null) {
-      return PrettyStringJsonWriter(sink, indentType, indentCount);
-    }
-    return StringJsonWriter(sink);
-  }
+  }) => StringJsonWriter(sink, indentType, indentCount);
+
+  factory JsonWriter.bytes(
+    BytesBuilder builder, {
+    IndentType? indentType,
+    int? indentCount,
+  }) => BytesJsonWriter(builder, indentType, indentCount);
   void beginObject();
   void endObject();
   void beginArray();

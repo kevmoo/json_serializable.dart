@@ -3,24 +3,30 @@ import 'shared.dart';
 
 enum _JsonScope { object, array }
 
-class PrettyStringJsonWriter implements JsonWriter {
-  final StringSink _sink;
+abstract class BaseJsonWriter implements JsonWriter {
   final List<_JsonScope> _stack = [];
   bool _hasValue = false;
-  final String _indentStr;
+  final String? _indentStr;
+  int _indentLevel = 0;
 
-  PrettyStringJsonWriter(this._sink, IndentType type, int? count)
-      : _indentStr = _getIndentStr(type, count);
+  BaseJsonWriter(IndentType? indentType, int? indentCount)
+      : _indentStr = _getIndentStr(indentType, indentCount);
 
-  static String _getIndentStr(IndentType type, int? count) {
+  static String? _getIndentStr(IndentType? type, int? count) {
+    if (type == null) return null;
     final n = count ?? (type == IndentType.spaces ? 2 : 1);
     return (type == IndentType.spaces ? ' ' : '\t') * n;
   }
 
+  // Abstract methods to be implemented by subclasses
+  void writeRawString(String s);
+  void writeRawChar(int c);
+
   void _indent() {
-    _sink.write('\n');
-    for (var i = 0; i < _stack.length; i++) {
-      _sink.write(_indentStr);
+    if (_indentStr == null) return;
+    writeRawChar(10); // '\n'
+    for (var i = 0; i < _indentLevel; i++) {
+      writeRawString(_indentStr);
     }
   }
 
@@ -29,7 +35,7 @@ class PrettyStringJsonWriter implements JsonWriter {
     final top = _stack.last;
     if (top == _JsonScope.array) {
       if (_hasValue) {
-        _sink.write(',');
+        writeRawChar(44); // ','
       }
       _indent();
       _hasValue = true;
@@ -38,7 +44,7 @@ class PrettyStringJsonWriter implements JsonWriter {
 
   void _beforeName() {
     if (_hasValue) {
-      _sink.write(',');
+      writeRawChar(44); // ','
     }
     _indent();
     _hasValue = true;
@@ -47,36 +53,40 @@ class PrettyStringJsonWriter implements JsonWriter {
   @override
   void beginObject() {
     _beforeValue();
-    _sink.write('{');
+    writeRawChar(123); // '{'
     _stack.add(_JsonScope.object);
     _hasValue = false;
+    _indentLevel++;
   }
 
   @override
   void endObject() {
     _stack.removeLast();
-    if (_hasValue) {
+    _indentLevel--;
+    if (_hasValue && _indentStr != null) {
       _indent();
     }
-    _sink.write('}');
+    writeRawChar(125); // '}'
     _hasValue = true;
   }
 
   @override
   void beginArray() {
     _beforeValue();
-    _sink.write('[');
+    writeRawChar(91); // '['
     _stack.add(_JsonScope.array);
     _hasValue = false;
+    _indentLevel++;
   }
 
   @override
   void endArray() {
     _stack.removeLast();
-    if (_hasValue) {
+    _indentLevel--;
+    if (_hasValue && _indentStr != null) {
       _indent();
     }
-    _sink.write(']');
+    writeRawChar(93); // ']'
     _hasValue = true;
   }
 
@@ -84,7 +94,10 @@ class PrettyStringJsonWriter implements JsonWriter {
   void name(String name) {
     _beforeName();
     _writeStringValue(name);
-    _sink.write(': ');
+    writeRawChar(58); // ':'
+    if (_indentStr != null) {
+      writeRawChar(32); // ' '
+    }
   }
 
   @override
@@ -96,25 +109,24 @@ class PrettyStringJsonWriter implements JsonWriter {
   @override
   void writeBool(bool value) {
     _beforeValue();
-    _sink.write(value ? 'true' : 'false');
+    writeRawString(value ? 'true' : 'false');
   }
 
   @override
   void writeNumber(num value) {
     _beforeValue();
-    _sink.write(value.toString());
+    writeRawString(value.toString());
   }
 
   @override
   void writeNull() {
     _beforeValue();
-    _sink.write('null');
+    writeRawString('null');
   }
 
   void _writeStringValue(String value) {
-    _sink
-      ..write('"')
-      ..write(escapeString(value))
-      ..write('"');
+    writeRawChar(34); // '"'
+    writeRawString(escapeString(value));
+    writeRawChar(34); // '"'
   }
 }

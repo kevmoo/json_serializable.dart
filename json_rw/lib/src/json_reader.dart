@@ -1,6 +1,9 @@
 import 'json_token.dart';
+import 'string_json_reader.dart';
 
 abstract class JsonReader {
+  factory JsonReader.fromString(String source) => StringJsonReader(source);
+
   /// Returns the type of the next token without consuming it.
   JsonToken peek();
 

@@ -1,4 +1,7 @@
+import 'string_json_writer.dart';
+
 abstract class JsonWriter {
+  factory JsonWriter(StringSink sink) => StringJsonWriter(sink);
   void beginObject();
   void endObject();
   void beginArray();

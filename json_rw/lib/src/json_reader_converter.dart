@@ -5,7 +5,7 @@ import 'resumable_builder.dart';
 class JsonReaderConverter<T> extends Converter<String, T> {
   final ResumableBuilder<T> Function() _createBuilder;
 
-  JsonReaderConverter(this._createBuilder);
+  const JsonReaderConverter(this._createBuilder);
 
   @override
   T convert(String input) {

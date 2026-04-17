@@ -7,8 +7,11 @@ class JsonWriterConverter<T> extends Converter<T, String> {
   final IndentType? _indentType;
   final int? _indentCount;
 
-  JsonWriterConverter(this._write, {IndentType? indentType, int? indentCount})
-      : _indentType = indentType,
+  const JsonWriterConverter(
+    this._write, {
+    IndentType? indentType,
+    int? indentCount,
+  })  : _indentType = indentType,
         _indentCount = indentCount;
 
   @override

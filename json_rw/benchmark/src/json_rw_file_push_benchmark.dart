@@ -1,7 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:json_rw/json_rw.dart';
+
 import '../../test/integration/complex_object.builder.dart';
+import '../../test/integration/complex_object.dart';
 import 'shared.dart';
 
 class JsonRwFilePushBenchmark extends AsyncJsonBenchmarkBase {
@@ -24,12 +27,12 @@ class JsonRwFilePushBenchmark extends AsyncJsonBenchmarkBase {
 
   @override
   Future<void> runImpl() async {
-    final builder = ComplexObjectBuilder();
-
     await File(_filePath!)
         .openRead()
         .transform(utf8.decoder)
-        .transform(JsonBuilderTransformer(builder))
+        .transform(
+          const JsonReaderConverter<ComplexObject>(ComplexObjectBuilder.new),
+        )
         .single;
   }
 }

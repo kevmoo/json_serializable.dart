@@ -22,7 +22,7 @@ void main() {
 
   test('JsonReaderConverter', () {
     const jsonStr = '{"value":42}';
-    final converter = JsonReaderConverter<SimpleObject>(
+    const converter = JsonReaderConverter<SimpleObject>(
       SimpleObjectBuilder.new,
     );
 
@@ -51,7 +51,7 @@ void main() {
 
   test('JsonReaderConverter streaming', () async {
     final jsonStream = Stream.fromIterable(['{"value":', '1}', '{"value":2}']);
-    final converter = JsonReaderConverter<SimpleObject>(
+    const converter = JsonReaderConverter<SimpleObject>(
       SimpleObjectBuilder.new,
     );
 

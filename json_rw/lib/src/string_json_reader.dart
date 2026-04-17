@@ -14,8 +14,8 @@ class StringJsonReader implements JsonReader {
 
   void _skipWhitespace() {
     while (_index < _source.length) {
-      final c = _source[_index];
-      if (c == ' ' || c == '\n' || c == '\r' || c == '\t') {
+      final c = _source.codeUnitAt(_index);
+      if (c == 32 || c == 10 || c == 13 || c == 9) {
         _index++;
       } else {
         break;
@@ -29,29 +29,30 @@ class StringJsonReader implements JsonReader {
     _skipWhitespace();
     if (_index >= _source.length) return JsonToken.eof;
 
-    final c = _source[_index];
+    final c = _source.codeUnitAt(_index);
     if (_expectName) {
-      if (c == '"') {
+      if (c == 34) { // '"'
         return _peeked = JsonToken.name;
-      } else if (c == '}') {
+      } else if (c == 125) { // '}'
         return _peeked = JsonToken.endObject;
       }
     }
 
     return switch (c) {
-      '{' => JsonToken.beginObject,
-      '}' => JsonToken.endObject,
-      '[' => JsonToken.beginArray,
-      ']' => JsonToken.endArray,
-      '"' => JsonToken.string,
-      't' || 'f' => JsonToken.boolean,
-      'n' => JsonToken.nullToken,
-      _ when _isDigit(c) || c == '-' => JsonToken.number,
-      _ => throw FormatException('Unexpected character: $c'),
+      123 => JsonToken.beginObject, // '{'
+      125 => JsonToken.endObject,   // '}'
+      91 => JsonToken.beginArray,    // '['
+      93 => JsonToken.endArray,      // ']'
+      34 => JsonToken.string,        // '"'
+      116 || 102 => JsonToken.boolean, // 't' || 'f'
+      110 => JsonToken.nullToken,    // 'n'
+      _ when _isDigit(c) || c == 45 => JsonToken.number, // '-'
+      _ => throw FormatException(
+          'Unexpected character: ${String.fromCharCode(c)}'),
     };
   }
 
-  bool _isDigit(String c) => c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57;
+  bool _isDigit(int c) => c >= 48 && c <= 57;
 
   @override
   void beginObject() {
@@ -101,14 +102,14 @@ class StringJsonReader implements JsonReader {
   bool hasNext() {
     _skipWhitespace();
     if (_index >= _source.length) return false;
-    final c = _source[_index];
-    if (c == '}' || c == ']') return false;
+    final c = _source.codeUnitAt(_index);
+    if (c == 125 || c == 93) return false; // '}' or ']'
     return true;
   }
 
   void _afterValue() {
     _skipWhitespace();
-    if (_index < _source.length && _source[_index] == ',') {
+    if (_index < _source.length && _source.codeUnitAt(_index) == 44) { // ','
       _index++; // consume ','
       if (_stack.isNotEmpty && _stack.last == _Scope.object) {
         _expectName = true;
@@ -123,7 +124,7 @@ class StringJsonReader implements JsonReader {
     }
     final name = _readString();
     _skipWhitespace();
-    if (_index >= _source.length || _source[_index] != ':') {
+    if (_index >= _source.length || _source.codeUnitAt(_index) != 58) { // ':'
       throw const FormatException('Expected : after name');
     }
     _index++; // consume ':'
@@ -146,8 +147,10 @@ class StringJsonReader implements JsonReader {
   String _readString() {
     _index++; // consume initial '"'
     final start = _index;
-    while (_index < _source.length && _source[_index] != '"') {
-      if (_source[_index] == '\\') {
+    while (_index < _source.length) {
+      final c = _source.codeUnitAt(_index);
+      if (c == 34) break; // '"'
+      if (c == 92) { // '\\'
         _index++; // skip escape
       }
       _index++;
@@ -162,9 +165,9 @@ class StringJsonReader implements JsonReader {
     if (peek() != JsonToken.boolean) {
       throw const FormatException('Expected boolean');
     }
-    final c = _source[_index];
+    final c = _source.codeUnitAt(_index);
     _peeked = null;
-    if (c == 't') {
+    if (c == 116) { // 't' {
       _index += 4; // true
       _afterValue();
       return true;
@@ -181,11 +184,13 @@ class StringJsonReader implements JsonReader {
       throw const FormatException('Expected number');
     }
     final start = _index;
-    while (_index < _source.length &&
-        (_isDigit(_source[_index]) ||
-            _source[_index] == '.' ||
-            _source[_index] == '-')) {
-      _index++;
+    while (_index < _source.length) {
+      final c = _source.codeUnitAt(_index);
+      if (_isDigit(c) || c == 46 || c == 45) { // '.', '-'
+        _index++;
+      } else {
+        break;
+      }
     }
     final s = _source.substring(start, _index);
     _peeked = null;

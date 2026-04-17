@@ -50,6 +50,15 @@ This file catalogs the optimization work done on the `json_rw` package to improv
     - **Write Large String**: Went from 3061.52 µs to **1366.26 µs** (~55% reduction!). Now **41.7% faster** than `json_serializable`.
     - **Write Small String**: Went from 47.38 µs to **17.75 µs** (~62% reduction!). Now **5.4% faster** than `json_serializable`.
 
+### Optimization 3: Optimize `Utf8JsonReader`
+- **Date**: 2026-04-17
+- **Details**:
+    - Replaced `utf8.decode(_source.sublist(...))` with `String.fromCharCodes(_source, start, end)` in `nextNumber` for ASCII numbers, avoiding allocations and full UTF-8 decoding.
+    - Used `Uint8List.sublistView` in `_readString` if `_source` is a `Uint8List`, avoiding copies.
+- **Results**:
+    - **Read Large UTF-8**: Went from 947.07 µs to **849.33 µs** (~10% reduction). Now **12.9% faster** than `json_serializable`.
+    - **Read Small UTF-8**: Went from 11.94 µs to **11.80 µs** (minor improvement). Now **19.3% faster** than `json_serializable`.
+
 ### Final State
 - `json_rw` now wins in **ALL** categories (Read/Write, Small/Large, String/UTF-8)!
 - Goal achieved and exceeded!

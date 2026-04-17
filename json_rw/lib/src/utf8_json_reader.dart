@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'json_reader.dart';
 import 'json_token.dart';
 
@@ -163,7 +164,11 @@ class Utf8JsonReader implements JsonReader {
     if (_index >= _source.length) {
       throw const FormatException('Unterminated string');
     }
-    final result = utf8.decode(_source.sublist(start, _index));
+    final result = utf8.decode(
+      _source is Uint8List
+          ? Uint8List.sublistView(_source, start, _index)
+          : _source.sublist(start, _index),
+    );
     _index++; // consume closing '"'
     return result;
   }
@@ -202,7 +207,7 @@ class Utf8JsonReader implements JsonReader {
         break;
       }
     }
-    final s = utf8.decode(_source.sublist(start, _index));
+    final s = String.fromCharCodes(_source, start, _index);
     final n = num.parse(s);
     _peeked = null;
     _afterValue();

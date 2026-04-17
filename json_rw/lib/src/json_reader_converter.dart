@@ -18,9 +18,8 @@ class JsonReaderConverter<T> extends Converter<String, T> {
   }
 
   @override
-  ChunkedConversionSink<String> startChunkedConversion(
-    Sink<T> sink,
-  ) => _JsonReaderSink<T>(sink, _createBuilder);
+  ChunkedConversionSink<String> startChunkedConversion(Sink<T> sink) =>
+      _JsonReaderSink<T>(sink, _createBuilder);
 }
 
 class _JsonReaderSink<T> implements ChunkedConversionSink<String> {
@@ -35,7 +34,7 @@ class _JsonReaderSink<T> implements ChunkedConversionSink<String> {
   void add(String chunk) {
     _reader.addChunk(chunk);
     _builder ??= _createBuilder();
-    
+
     while (true) {
       if (_builder!.hydrate(_reader)) {
         _sink.add(_builder!.build());

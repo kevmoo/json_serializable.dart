@@ -221,8 +221,9 @@ class StringJsonReader implements JsonReader {
     if (_index >= _source.length) {
       throw const FormatException('Unterminated string');
     }
-    final result =
-        sb == null ? _source.substring(start, _index) : sb.toString();
+    final result = sb == null
+        ? _source.substring(start, _index)
+        : sb.toString();
     _index++; // consume closing '"'
     return result;
   }
@@ -255,7 +256,7 @@ class StringJsonReader implements JsonReader {
 
     var scanIndex = _index;
     var c = _source.codeUnitAt(scanIndex);
-    if (c == 45 /* - */) {
+    if (c == 45 /* - */ ) {
       scanIndex++;
       if (scanIndex < _source.length) {
         c = _source.codeUnitAt(scanIndex);
@@ -264,15 +265,15 @@ class StringJsonReader implements JsonReader {
       }
     }
 
-    if (c == 48 /* '0' */) {
+    if (c == 48 /* '0' */ ) {
       scanIndex++;
       if (scanIndex < _source.length) {
         c = _source.codeUnitAt(scanIndex);
-        if (c >= 48 && c <= 57 /* 0-9 */) {
+        if (c >= 48 && c <= 57 /* 0-9 */ ) {
           throw const FormatException('Leading zeros are not allowed');
         }
       }
-    } else if (c == 46 /* '.' */) {
+    } else if (c == 46 /* '.' */ ) {
       throw const FormatException('Leading decimal point is not allowed');
     }
 
@@ -286,7 +287,7 @@ class StringJsonReader implements JsonReader {
       }
     }
 
-    if (_index > start && _source.codeUnitAt(_index - 1) == 46 /* '.' */) {
+    if (_index > start && _source.codeUnitAt(_index - 1) == 46 /* '.' */ ) {
       throw const FormatException('Trailing decimal point is not allowed');
     }
 

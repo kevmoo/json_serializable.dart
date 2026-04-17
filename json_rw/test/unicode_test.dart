@@ -43,10 +43,10 @@ void main() {
   test('StringJsonReader read unicode strings', () {
     for (final s in _unicodeStrings) {
       final jsonString = '"$s"';
-      
+
       // Sanity check against SDK
       expect(json.decode(jsonString), s);
-      
+
       final reader = JsonReader.fromString(jsonString);
       expect(reader.peek(), JsonToken.string);
       expect(reader.nextString(), s);
@@ -56,10 +56,10 @@ void main() {
   test('Utf8JsonReader read unicode strings', () {
     for (final s in _unicodeStrings) {
       final jsonString = '"$s"';
-      
+
       // Sanity check against SDK
       expect(json.decode(jsonString), s);
-      
+
       final bytes = utf8.encode(jsonString);
       final reader = JsonReader.fromUtf8(bytes);
       expect(reader.peek(), JsonToken.string);
@@ -71,10 +71,10 @@ void main() {
     for (final testCase in _testCases) {
       final jsonString = testCase[0];
       final expected = testCase[1];
-      
+
       // Sanity check against SDK
       expect(json.decode(jsonString), expected);
-      
+
       final reader = JsonReader.fromString(jsonString);
       expect(reader.peek(), JsonToken.string);
       expect(reader.nextString(), expected);
@@ -85,10 +85,10 @@ void main() {
     for (final testCase in _testCases) {
       final jsonString = testCase[0];
       final expected = testCase[1];
-      
+
       // Sanity check against SDK
       expect(json.decode(jsonString), expected);
-      
+
       final bytes = utf8.encode(jsonString);
       final reader = JsonReader.fromUtf8(bytes);
       expect(reader.peek(), JsonToken.string);

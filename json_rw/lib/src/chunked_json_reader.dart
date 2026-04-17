@@ -16,6 +16,25 @@ class NeedsMoreDataException implements Exception {
   /// A user-friendly message describing why more data is needed.
   String get message => _reason.message;
 
+  static const unexpectedEndOfChunk = NeedsMoreDataException._(
+    _NeedsMoreDataReason.unexpectedEndOfChunk,
+  );
+  static const partialName = NeedsMoreDataException._(
+    _NeedsMoreDataReason.partialName,
+  );
+  static const partialString = NeedsMoreDataException._(
+    _NeedsMoreDataReason.partialString,
+  );
+  static const partialKeyword = NeedsMoreDataException._(
+    _NeedsMoreDataReason.partialKeyword,
+  );
+  static const partialNumber = NeedsMoreDataException._(
+    _NeedsMoreDataReason.partialNumber,
+  );
+  static const partialNull = NeedsMoreDataException._(
+    _NeedsMoreDataReason.partialNull,
+  );
+
   @override
   String toString() => 'NeedsMoreDataException: $message';
 }

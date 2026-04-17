@@ -7,7 +7,7 @@ class BytesJsonWriter extends BaseJsonWriter {
   final BytesBuilder _builder;
 
   BytesJsonWriter(this._builder, [IndentType? indentType, int? indentCount])
-      : super(indentType, indentCount);
+    : super(indentType, indentCount);
 
   @override
   void writeRawString(String s) {

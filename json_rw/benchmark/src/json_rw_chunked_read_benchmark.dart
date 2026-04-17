@@ -11,8 +11,12 @@ class JsonRwChunkedReadBenchmark extends JsonBenchmarkBase {
     const chunkSize = 1024;
     for (var i = 0; i < largeJsonString.length; i += chunkSize) {
       final end = i + chunkSize;
-      chunks.add(largeJsonString.substring(
-          i, end < largeJsonString.length ? end : largeJsonString.length));
+      chunks.add(
+        largeJsonString.substring(
+          i,
+          end < largeJsonString.length ? end : largeJsonString.length,
+        ),
+      );
     }
 
     var chunkIndex = 0;

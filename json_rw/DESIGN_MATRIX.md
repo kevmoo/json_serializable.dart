@@ -11,7 +11,7 @@ We want to support populating a custom class (e.g., `CustomClass`) from the foll
 | :--- | :--- | :--- | :--- |
 | **String** | Supported (via `JsonReader`) | Supported (via Builder) | Done |
 | **Stream<String>** | Supported (via `ChunkedJsonReader`) | Supported (via `JsonBuilderTransformer`) | Done |
-| **List<int> (Bytes)** | Supported (via `Utf8Decoder().fuse(...)`) | Supported (via `Utf8Decoder().fuse(...)`) | Proposed |
+| **List<int> (Bytes)** | Supported (via `Utf8JsonReader`) | Supported (via Builder) | Done |
 | **Stream<List<int>>** | Supported (via Stream pipe) | Supported (via Stream pipe) | Proposed |
 
 ### Writing (Serialization)
@@ -21,7 +21,7 @@ We want to support writing a custom class to the following targets:
 | :--- | :--- | :--- | :--- |
 | **String** | Supported (`StringJsonWriter`) | Supported (`PrettyStringJsonWriter`) | Done |
 | **Stream<String>** | Supported (via Sink) | Supported (via Sink) | Done |
-| **List<int> (Bytes)** | Supported (via `fuse(Utf8Encoder())`) | Supported (via `fuse(Utf8Encoder())`) | Proposed |
+| **List<int> (Bytes)** | Supported (`BytesJsonWriter`) | Supported (`BytesJsonWriter`) | Done |
 | **Stream<List<int>>** | Supported (via Stream pipe) | Supported (via Stream pipe) | Proposed |
 
 ## Proposed Solution: The Converter Model

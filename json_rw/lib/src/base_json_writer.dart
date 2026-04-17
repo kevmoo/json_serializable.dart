@@ -10,7 +10,7 @@ abstract class BaseJsonWriter implements JsonWriter {
   int _indentLevel = 0;
 
   BaseJsonWriter(IndentType? indentType, int? indentCount)
-      : _indentStr = _getIndentStr(indentType, indentCount);
+    : _indentStr = _getIndentStr(indentType, indentCount);
 
   static String? _getIndentStr(IndentType? type, int? count) {
     if (type == null) return null;

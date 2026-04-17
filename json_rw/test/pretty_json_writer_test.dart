@@ -15,7 +15,7 @@ void main() {
       ..writeNumber(2)
       ..endArray()
       ..endObject();
-    
+
     expect(sb.toString(), '''
 {
   "name": "value",
@@ -33,7 +33,7 @@ void main() {
       ..name('name')
       ..writeString('value')
       ..endObject();
-    
+
     expect(sb.toString(), '''
 {
 \t"name": "value"
@@ -42,16 +42,12 @@ void main() {
 
   test('custom count', () {
     final sb = StringBuffer();
-    JsonWriter(
-      sb,
-      indentType: IndentType.spaces,
-      indentCount: 4,
-    )
+    JsonWriter(sb, indentType: IndentType.spaces, indentCount: 4)
       ..beginObject()
       ..name('name')
       ..writeString('value')
       ..endObject();
-    
+
     expect(sb.toString(), '''
 {
     "name": "value"
@@ -69,7 +65,7 @@ void main() {
       ..beginArray()
       ..endArray()
       ..endObject();
-    
+
     expect(sb.toString(), '''
 {
   "emptyObj": {},
@@ -84,7 +80,7 @@ void main() {
       'emptyObj': <String, dynamic>{},
       'emptyArr': <dynamic>[],
     };
-    
+
     final sb = StringBuffer();
     JsonWriter(sb, indentType: IndentType.spaces)
       ..beginObject()
@@ -102,10 +98,10 @@ void main() {
       ..beginArray()
       ..endArray()
       ..endObject();
-    
+
     final ourOutput = sb.toString();
     final dartOutput = const JsonEncoder.withIndent('  ').convert(map);
-    
+
     expect(ourOutput, dartOutput);
   });
 }

@@ -23,11 +23,11 @@ class JsonSerializableFileBenchmark extends AsyncJsonBenchmarkBase {
 
   @override
   Future<void> runImpl() async {
-    final map = await File(_filePath!)
-        .openRead()
-        .transform(utf8.decoder)
-        .transform(json.decoder)
-        .single as Map<String, dynamic>;
+    final map =
+        await File(
+              _filePath!,
+            ).openRead().transform(utf8.decoder).transform(json.decoder).single
+            as Map<String, dynamic>;
 
     ComplexObject.fromJson(map);
   }

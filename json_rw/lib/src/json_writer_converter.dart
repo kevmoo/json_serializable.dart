@@ -11,8 +11,8 @@ class JsonWriterConverter<T> extends Converter<T, String> {
     this._write, {
     IndentType? indentType,
     int? indentCount,
-  })  : _indentType = indentType,
-        _indentCount = indentCount;
+  }) : _indentType = indentType,
+       _indentCount = indentCount;
 
   @override
   String convert(T input) {
@@ -27,15 +27,13 @@ class JsonWriterConverter<T> extends Converter<T, String> {
   }
 
   @override
-  ChunkedConversionSink<T> startChunkedConversion(
-    Sink<String> sink,
-  ) => _JsonWriterSink<T>(sink, _write, _indentType, _indentCount);
+  ChunkedConversionSink<T> startChunkedConversion(Sink<String> sink) =>
+      _JsonWriterSink<T>(sink, _write, _indentType, _indentCount);
 
   @override
   Converter<T, R> fuse<R>(Converter<String, R> other) {
     if (other is Utf8Encoder) {
-      return _FusedBytesConverter<T>(_write, _indentType)
-          as Converter<T, R>;
+      return _FusedBytesConverter<T>(_write, _indentType) as Converter<T, R>;
     }
     return super.fuse(other);
   }
@@ -76,18 +74,14 @@ class _FusedBytesConverter<T> extends Converter<T, List<int>> {
   @override
   List<int> convert(T input) {
     final builder = BytesBuilder();
-    final writer = JsonWriter.bytes(
-      builder,
-      indentType: _indentType,
-    );
+    final writer = JsonWriter.bytes(builder, indentType: _indentType);
     _write(input, writer);
     return builder.toBytes();
   }
 
   @override
-  ChunkedConversionSink<T> startChunkedConversion(
-    Sink<List<int>> sink,
-  ) => _JsonBytesWriterSink<T>(sink, _write, _indentType);
+  ChunkedConversionSink<T> startChunkedConversion(Sink<List<int>> sink) =>
+      _JsonBytesWriterSink<T>(sink, _write, _indentType);
 }
 
 class _JsonBytesWriterSink<T> implements ChunkedConversionSink<T> {
@@ -95,19 +89,12 @@ class _JsonBytesWriterSink<T> implements ChunkedConversionSink<T> {
   final void Function(T object, JsonWriter writer) _write;
   final IndentType? _indentType;
 
-  _JsonBytesWriterSink(
-    this._sink,
-    this._write,
-    this._indentType,
-  );
+  _JsonBytesWriterSink(this._sink, this._write, this._indentType);
 
   @override
   void add(T chunk) {
     final builder = BytesBuilder();
-    final writer = JsonWriter.bytes(
-      builder,
-      indentType: _indentType,
-    );
+    final writer = JsonWriter.bytes(builder, indentType: _indentType);
     _write(chunk, writer);
     _sink.add(builder.toBytes());
   }

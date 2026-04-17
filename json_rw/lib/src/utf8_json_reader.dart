@@ -298,9 +298,7 @@ class Utf8JsonReader implements JsonReader {
     if (checkStr.startsWith('-')) {
       checkStr = checkStr.substring(1);
     }
-    if (checkStr.startsWith('0') &&
-        checkStr.length > 1 &&
-        checkStr[1] != '.') {
+    if (checkStr.startsWith('0') && checkStr.length > 1 && checkStr[1] != '.') {
       throw const FormatException('Leading zeros are not allowed');
     }
     if (checkStr.endsWith('.')) {

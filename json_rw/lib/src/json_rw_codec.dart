@@ -15,17 +15,17 @@ class JsonRwCodec<T> extends Codec<T, String> {
     required ResumableBuilder<T> Function() builder,
     IndentType? indentType,
     int? indentCount,
-  })  : _write = write,
-        _createBuilder = builder,
-        _indentType = indentType,
-        _indentCount = indentCount;
+  }) : _write = write,
+       _createBuilder = builder,
+       _indentType = indentType,
+       _indentCount = indentCount;
 
   @override
   JsonWriterConverter<T> get encoder => JsonWriterConverter<T>(
-        _write,
-        indentType: _indentType,
-        indentCount: _indentCount,
-      );
+    _write,
+    indentType: _indentType,
+    indentCount: _indentCount,
+  );
 
   @override
   JsonReaderConverter<T> get decoder => JsonReaderConverter<T>(_createBuilder);

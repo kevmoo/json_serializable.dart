@@ -5,7 +5,7 @@ class StringJsonWriter extends BaseJsonWriter {
   final StringSink _sink;
 
   StringJsonWriter(this._sink, [IndentType? indentType, int? indentCount])
-      : super(indentType, indentCount);
+    : super(indentType, indentCount);
 
   @override
   void writeRawString(String s) {

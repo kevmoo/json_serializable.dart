@@ -4,7 +4,7 @@ import 'shared.dart';
 
 class JsonSerializableChunkedReadBenchmark extends JsonBenchmarkBase {
   const JsonSerializableChunkedReadBenchmark()
-      : super('json_serializable_chunked_read');
+    : super('json_serializable_chunked_read');
 
   @override
   void runImpl() {
@@ -19,7 +19,9 @@ class JsonSerializableChunkedReadBenchmark extends JsonBenchmarkBase {
     for (var i = 0; i < largeJsonString.length; i += chunkSize) {
       final end = i + chunkSize;
       final chunk = largeJsonString.substring(
-          i, end < largeJsonString.length ? end : largeJsonString.length);
+        i,
+        end < largeJsonString.length ? end : largeJsonString.length,
+      );
       inputSink.add(chunk);
     }
     inputSink.close();

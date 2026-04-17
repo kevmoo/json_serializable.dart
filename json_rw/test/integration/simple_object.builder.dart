@@ -1,10 +1,11 @@
 import 'package:json_rw/json_rw.dart';
 import 'simple_object.dart';
 
-class SimpleObjectBuilder {
+class SimpleObjectBuilder implements ResumableBuilder<SimpleObject> {
   int? value;
   int state = 0;
 
+  @override
   bool hydrate(ChunkedJsonReader reader) {
     try {
       while (true) {
@@ -46,5 +47,6 @@ class SimpleObjectBuilder {
     }
   }
 
+  @override
   SimpleObject build() => SimpleObject(value!);
 }

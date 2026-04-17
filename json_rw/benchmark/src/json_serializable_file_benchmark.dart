@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:json_rw/json_rw.dart';
-import '../../test/integration/complex_object.builder.dart';
+import '../../test/integration/complex_object.dart';
 import 'shared.dart';
 
-class JsonRwFilePushBenchmark extends AsyncJsonBenchmarkBase {
+class JsonSerializableFileBenchmark extends AsyncJsonBenchmarkBase {
   Directory? _tempDir;
   String? _filePath;
 
-  JsonRwFilePushBenchmark() : super('json_rw_file_push');
+  JsonSerializableFileBenchmark() : super('json_serializable_file');
 
   @override
   Future<void> setup() async {
@@ -24,12 +23,12 @@ class JsonRwFilePushBenchmark extends AsyncJsonBenchmarkBase {
 
   @override
   Future<void> runImpl() async {
-    final builder = ComplexObjectBuilder();
-
-    await File(_filePath!)
+    final map = await File(_filePath!)
         .openRead()
         .transform(utf8.decoder)
-        .transform(JsonBuilderTransformer(builder))
-        .single;
+        .transform(json.decoder)
+        .single as Map<String, dynamic>;
+
+    ComplexObject.fromJson(map);
   }
 }

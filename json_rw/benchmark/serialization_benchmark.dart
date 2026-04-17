@@ -9,6 +9,7 @@ import 'src/json_rw_utf8_benchmark.dart';
 import 'src/json_rw_utf8_read_benchmark.dart';
 import 'src/json_serializable_benchmark.dart';
 import 'src/json_serializable_chunked_read_benchmark.dart';
+import 'src/json_serializable_file_benchmark.dart';
 import 'src/json_serializable_read_benchmark.dart';
 import 'src/json_serializable_utf8_benchmark.dart';
 import 'src/json_serializable_utf8_read_benchmark.dart';
@@ -58,4 +59,5 @@ final _benchmarks = <String, FutureOr<void> Function()>{
   'json_rw_utf8_read_small': const JsonRwUtf8ReadSmallBenchmark().report,
   'json_rw_file_pull': () => JsonRwFilePullBenchmark().report(),
   'json_rw_file_push': () => JsonRwFilePushBenchmark().report(),
+  'json_serializable_file': () => JsonSerializableFileBenchmark().report(),
 };

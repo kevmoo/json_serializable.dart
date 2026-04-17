@@ -3,7 +3,7 @@ import 'complex_object.dart';
 import 'simple_object.builder.dart';
 import 'simple_object.dart';
 
-class ComplexObjectBuilder {
+class ComplexObjectBuilder implements ResumableBuilder<ComplexObject> {
   String? name;
   int? age;
   List<SimpleObject>? objects;
@@ -15,6 +15,7 @@ class ComplexObjectBuilder {
   SimpleObjectBuilder? currentObjectBuilder;
   String? currentMapKey;
 
+  @override
   bool hydrate(ChunkedJsonReader reader) {
     try {
       while (true) {
@@ -118,6 +119,7 @@ class ComplexObjectBuilder {
     }
   }
 
+  @override
   ComplexObject build() => ComplexObject(
         name: name!,
         age: age!,

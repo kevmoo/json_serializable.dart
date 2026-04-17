@@ -94,4 +94,71 @@ void declareReaderTests(JsonReader Function(String json) createReader) {
     check(reader.nextNumber()).equals(42);
     reader.endArray();
   });
+
+  test('malformed numbers', () {
+    // JSON does not allow leading zeros
+    check(() {
+      createReader('[01]')
+        ..beginArray()
+        ..nextNumber();
+    }).throws<FormatException>();
+
+    // JSON requires digits after decimal point
+    check(() {
+      createReader('[0.]')
+        ..beginArray()
+        ..nextNumber();
+    }).throws<FormatException>();
+
+    // JSON requires digits before decimal point
+    check(() {
+      createReader('[.0]')
+        ..beginArray()
+        ..nextNumber();
+    }).throws<FormatException>();
+  });
+
+  test('malformed strings', () {
+    // Unterminated string
+    check(() {
+      createReader('"abc').nextString();
+    }).throws<FormatException>();
+
+    // Bad escape
+    check(() {
+      createReader(r'"\a"').nextString();
+    }).throws<FormatException>();
+
+    // Control character must be escaped
+    check(() {
+      final ctrlStr = String.fromCharCodes([34, 10, 34]); // "\n"
+      createReader(ctrlStr).nextString();
+    }).throws<FormatException>();
+  });
+
+  test('malformed structures', () {
+    // Keys must be strings
+    check(() {
+      createReader('{x:10}')
+        ..beginObject()
+        ..nextName();
+    }).throws<FormatException>();
+
+    // Double comma
+    check(() {
+      createReader('[1,,2]')
+        ..beginArray()
+        ..nextNumber()
+        ..nextNumber();
+    }).throws<FormatException>();
+
+    // Trailing comma
+    check(() {
+      createReader('[1,2,]')
+        ..beginArray()
+        ..nextNumber()
+        ..nextNumber()
+        ..hasNext();
+    }).throws<FormatException>();
+  });
 }

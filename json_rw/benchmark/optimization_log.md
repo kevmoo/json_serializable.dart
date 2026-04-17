@@ -62,3 +62,13 @@ This file catalogs the optimization work done on the `json_rw` package to improv
 ### Final State
 - `json_rw` now wins in **ALL** categories (Read/Write, Small/Large, String/UTF-8)!
 - Goal achieved and exceeded!
+
+## Edge Cases and Correctness (SDK Tests)
+- **Date**: 2026-04-17
+- **Details**: Added tests for malformed content inspired by the Dart SDK `json_test.dart`.
+- **Findings**: Several tests failed because `json_rw` is currently lenient and does not strictly validate all JSON constraints:
+    - **Unterminated Strings**: `StringJsonReader` returns the string up to EOF instead of throwing.
+    - **Invalid Escapes**: `Utf8JsonReader` skips the escape character and accepts invalid escapes like `\a`.
+    - **Leading Zeros**: Both readers accept numbers like `01` because they rely on `num.parse`.
+    - **Trailing Commas**: Both readers accept trailing commas in arrays/objects because `hasNext()` just checks for closing brackets.
+- **Status**: Tests are currently failing. We need to decide whether to add strict validation (which may impact performance) or keep the current lenient behavior.

@@ -1,8 +1,12 @@
 import 'json_token.dart';
 import 'string_json_reader.dart';
+import 'utf8_json_reader.dart';
 
 abstract class JsonReader {
-  factory JsonReader.fromString(String source) => StringJsonReader(source);
+  factory JsonReader.fromString(String source) =>
+      StringJsonReader(source);
+  factory JsonReader.fromUtf8(List<int> source) =>
+      Utf8JsonReader(source);
 
   /// Returns the type of the next token without consuming it.
   JsonToken peek();

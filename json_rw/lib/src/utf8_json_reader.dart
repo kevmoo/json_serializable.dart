@@ -11,6 +11,7 @@ class Utf8JsonReader implements JsonReader {
   final List<_Scope> _stack = [];
   JsonToken? _peeked;
   bool _expectName = false;
+  bool _commaConsumed = false;
 
   Utf8JsonReader(this._source);
 
@@ -107,7 +108,14 @@ class Utf8JsonReader implements JsonReader {
     _skipWhitespace();
     if (_index >= _source.length) return false;
     final c = _source[_index];
-    if (c == 125 || c == 93) return false; // '}' or ']'
+    if (c == 125 || c == 93) {
+      // '}' or ']'
+      if (_commaConsumed) {
+        throw const FormatException('Trailing comma is not allowed');
+      }
+      return false;
+    }
+    _commaConsumed = false;
     return true;
   }
 
@@ -116,6 +124,7 @@ class Utf8JsonReader implements JsonReader {
     if (_index < _source.length && _source[_index] == 44) {
       // ','
       _index++; // consume ','
+      _commaConsumed = true;
       if (_stack.isNotEmpty && _stack.last == _Scope.object) {
         _expectName = true;
       }
@@ -155,9 +164,30 @@ class Utf8JsonReader implements JsonReader {
     final start = _index;
     while (_index < _source.length && _source[_index] != 34) {
       // '"'
-      if (_source[_index] == 92) {
+      final c = _source[_index];
+      if (c < 32) {
+        throw const FormatException('Control characters must be escaped');
+      }
+      if (c == 92) {
         // '\\'
         _index++; // skip escape
+        if (_index >= _source.length) {
+          throw const FormatException('Unterminated escape');
+        }
+        final esc = _source[_index];
+        if (esc != 34 &&
+            esc != 92 &&
+            esc != 47 &&
+            esc != 98 &&
+            esc != 102 &&
+            esc != 110 &&
+            esc != 114 &&
+            esc != 116 &&
+            esc != 117) {
+          throw FormatException(
+            'Invalid escape sequence: \\${String.fromCharCode(esc)}',
+          );
+        }
       }
       _index++;
     }
@@ -208,6 +238,24 @@ class Utf8JsonReader implements JsonReader {
       }
     }
     final s = String.fromCharCodes(_source, start, _index);
+
+    // Validate leading zeros
+    var checkStr = s;
+    if (checkStr.startsWith('-')) {
+      checkStr = checkStr.substring(1);
+    }
+    if (checkStr.startsWith('0') &&
+        checkStr.length > 1 &&
+        checkStr[1] != '.') {
+      throw const FormatException('Leading zeros are not allowed');
+    }
+    if (checkStr.endsWith('.')) {
+      throw const FormatException('Trailing decimal point is not allowed');
+    }
+    if (checkStr.startsWith('.')) {
+      throw const FormatException('Leading decimal point is not allowed');
+    }
+
     final n = num.parse(s);
     _peeked = null;
     _afterValue();

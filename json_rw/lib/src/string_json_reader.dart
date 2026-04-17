@@ -9,6 +9,7 @@ class StringJsonReader implements JsonReader {
   JsonToken? _peeked;
   final List<_Scope> _stack = [];
   bool _expectName = false;
+  bool _commaConsumed = false;
 
   StringJsonReader(this._source);
 
@@ -31,24 +32,27 @@ class StringJsonReader implements JsonReader {
 
     final c = _source.codeUnitAt(_index);
     if (_expectName) {
-      if (c == 34) { // '"'
+      if (c == 34) {
+        // '"'
         return _peeked = JsonToken.name;
-      } else if (c == 125) { // '}'
+      } else if (c == 125) {
+        // '}'
         return _peeked = JsonToken.endObject;
       }
     }
 
     return switch (c) {
       123 => JsonToken.beginObject, // '{'
-      125 => JsonToken.endObject,   // '}'
-      91 => JsonToken.beginArray,    // '['
-      93 => JsonToken.endArray,      // ']'
-      34 => JsonToken.string,        // '"'
+      125 => JsonToken.endObject, // '}'
+      91 => JsonToken.beginArray, // '['
+      93 => JsonToken.endArray, // ']'
+      34 => JsonToken.string, // '"'
       116 || 102 => JsonToken.boolean, // 't' || 'f'
-      110 => JsonToken.nullToken,    // 'n'
+      110 => JsonToken.nullToken, // 'n'
       _ when _isDigit(c) || c == 45 => JsonToken.number, // '-'
       _ => throw FormatException(
-          'Unexpected character: ${String.fromCharCode(c)}'),
+        'Unexpected character: ${String.fromCharCode(c)}',
+      ),
     };
   }
 
@@ -103,14 +107,23 @@ class StringJsonReader implements JsonReader {
     _skipWhitespace();
     if (_index >= _source.length) return false;
     final c = _source.codeUnitAt(_index);
-    if (c == 125 || c == 93) return false; // '}' or ']'
+    if (c == 125 || c == 93) {
+      // '}' or ']'
+      if (_commaConsumed) {
+        throw const FormatException('Trailing comma is not allowed');
+      }
+      return false;
+    }
+    _commaConsumed = false;
     return true;
   }
 
   void _afterValue() {
     _skipWhitespace();
-    if (_index < _source.length && _source.codeUnitAt(_index) == 44) { // ','
+    if (_index < _source.length && _source.codeUnitAt(_index) == 44) {
+      // ','
       _index++; // consume ','
+      _commaConsumed = true;
       if (_stack.isNotEmpty && _stack.last == _Scope.object) {
         _expectName = true;
       }
@@ -124,7 +137,8 @@ class StringJsonReader implements JsonReader {
     }
     final name = _readString();
     _skipWhitespace();
-    if (_index >= _source.length || _source.codeUnitAt(_index) != 58) { // ':'
+    if (_index >= _source.length || _source.codeUnitAt(_index) != 58) {
+      // ':'
       throw const FormatException('Expected : after name');
     }
     _index++; // consume ':'
@@ -150,10 +164,34 @@ class StringJsonReader implements JsonReader {
     while (_index < _source.length) {
       final c = _source.codeUnitAt(_index);
       if (c == 34) break; // '"'
-      if (c == 92) { // '\\'
+      if (c < 32) {
+        throw const FormatException('Control characters must be escaped');
+      }
+      if (c == 92) {
+        // '\\'
         _index++; // skip escape
+        if (_index >= _source.length) {
+          throw const FormatException('Unterminated escape');
+        }
+        final esc = _source.codeUnitAt(_index);
+        if (esc != 34 &&
+            esc != 92 &&
+            esc != 47 &&
+            esc != 98 &&
+            esc != 102 &&
+            esc != 110 &&
+            esc != 114 &&
+            esc != 116 &&
+            esc != 117) {
+          throw FormatException(
+            'Invalid escape sequence: \\${String.fromCharCode(esc)}',
+          );
+        }
       }
       _index++;
+    }
+    if (_index >= _source.length) {
+      throw const FormatException('Unterminated string');
     }
     final s = _source.substring(start, _index);
     _index++; // consume closing '"'
@@ -167,7 +205,8 @@ class StringJsonReader implements JsonReader {
     }
     final c = _source.codeUnitAt(_index);
     _peeked = null;
-    if (c == 116) { // 't' {
+    if (c == 116) {
+      // 't' {
       _index += 4; // true
       _afterValue();
       return true;
@@ -184,14 +223,44 @@ class StringJsonReader implements JsonReader {
       throw const FormatException('Expected number');
     }
     final start = _index;
+
+    var scanIndex = _index;
+    var c = _source.codeUnitAt(scanIndex);
+    if (c == 45 /* - */) {
+      scanIndex++;
+      if (scanIndex < _source.length) {
+        c = _source.codeUnitAt(scanIndex);
+      } else {
+        throw const FormatException('Invalid number');
+      }
+    }
+
+    if (c == 48 /* '0' */) {
+      scanIndex++;
+      if (scanIndex < _source.length) {
+        c = _source.codeUnitAt(scanIndex);
+        if (c >= 48 && c <= 57 /* 0-9 */) {
+          throw const FormatException('Leading zeros are not allowed');
+        }
+      }
+    } else if (c == 46 /* '.' */) {
+      throw const FormatException('Leading decimal point is not allowed');
+    }
+
     while (_index < _source.length) {
       final c = _source.codeUnitAt(_index);
-      if (_isDigit(c) || c == 46 || c == 45) { // '.', '-'
+      if (_isDigit(c) || c == 46 || c == 45) {
+        // '.', '-'
         _index++;
       } else {
         break;
       }
     }
+
+    if (_index > start && _source.codeUnitAt(_index - 1) == 46 /* '.' */) {
+      throw const FormatException('Trailing decimal point is not allowed');
+    }
+
     final s = _source.substring(start, _index);
     _peeked = null;
     _afterValue();

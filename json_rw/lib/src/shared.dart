@@ -4,28 +4,17 @@ String escapeString(String value) {
 
   for (var i = 0; i < value.length; i++) {
     final c = value.codeUnitAt(i);
-    String? escape;
-
-    if (c == 34) {
-      escape = '\\"';
-    } else if (c == 92) {
-      escape = '\\\\';
-    } else if (c < 32) {
-      switch (c) {
-        case 8:
-          escape = '\\b';
-        case 12:
-          escape = '\\f';
-        case 10:
-          escape = '\\n';
-        case 13:
-          escape = '\\r';
-        case 9:
-          escape = '\\t';
-        default:
-          escape = '\\u${c.toRadixString(16).padLeft(4, '0')}';
-      }
-    }
+    final escape = switch (c) {
+      34 => '\\"',
+      92 => '\\\\',
+      8 => '\\b',
+      12 => '\\f',
+      10 => '\\n',
+      13 => '\\r',
+      9 => '\\t',
+      _ when c < 32 => '\\u${c.toRadixString(16).padLeft(4, '0')}',
+      _ => null,
+    };
 
     if (escape != null) {
       buffer ??= StringBuffer();

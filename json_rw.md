@@ -1,13 +1,14 @@
 # Implementation Plan: `json_rw`
 
-New package in the workspace: `json_rw`
+## Agent work guidelines
 
-I want to be able to do "streaming" encode/decode of JSON - to/from Strings or
-Stream<List<int>> without intermediate JSON objects.
-
-Ideally this could just be an add-on to `json_serializable`.
-
-But to start with need the base types: `JsonReader` and `JsonWriter`.
+- ONLY make changes in the (new) json_rw directory
+- Please "steal" examples from json_serializable tests if you want complex examples
+- Make sure things are thoroughly tested
+- Make sure the analyzer reports no issues and the code is formatted.
+- We ARE going to be looking at home code generation will layer on top of this, but not now.
+- If you want to create some examples w/ part files to simulate what a generator WOULD generate
+  and how that would align w/ the user's hand-written code that would be GREAT!
 
 ## Proposed APIs
 

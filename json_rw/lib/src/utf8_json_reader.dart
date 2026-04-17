@@ -162,6 +162,8 @@ class Utf8JsonReader implements JsonReader {
   String _readString() {
     _index++; // consume initial '"'
     final start = _index;
+    var hasEscapes = false;
+
     while (_index < _source.length && _source[_index] != 34) {
       // '"'
       final c = _source[_index];
@@ -170,6 +172,7 @@ class Utf8JsonReader implements JsonReader {
       }
       if (c == 92) {
         // '\\'
+        hasEscapes = true;
         _index++; // skip escape
         if (_index >= _source.length) {
           throw const FormatException('Unterminated escape');
@@ -188,19 +191,70 @@ class Utf8JsonReader implements JsonReader {
             'Invalid escape sequence: \\${String.fromCharCode(esc)}',
           );
         }
+        if (esc == 117) {
+          _index += 4; // skip XXXX
+          if (_index >= _source.length) {
+            throw const FormatException('Invalid unicode escape');
+          }
+        }
       }
       _index++;
     }
+
     if (_index >= _source.length) {
       throw const FormatException('Unterminated string');
     }
-    final result = utf8.decode(
-      _source is Uint8List
-          ? Uint8List.sublistView(_source, start, _index)
-          : _source.sublist(start, _index),
-    );
+
+    final rawBytes = _source is Uint8List
+        ? Uint8List.sublistView(_source, start, _index)
+        : _source.sublist(start, _index);
+
+    final result = utf8.decode(rawBytes);
     _index++; // consume closing '"'
-    return result;
+
+    if (!hasEscapes) {
+      return result;
+    }
+
+    // Decode escapes in the string
+    final sb = StringBuffer();
+    var i = 0;
+    while (i < result.length) {
+      final c = result.codeUnitAt(i);
+      if (c == 92) {
+        // '\\'
+        i++;
+        final esc = result.codeUnitAt(i);
+        switch (esc) {
+          case 34:
+            sb.writeCharCode(34);
+          case 92:
+            sb.writeCharCode(92);
+          case 47:
+            sb.writeCharCode(47);
+          case 98:
+            sb.writeCharCode(8);
+          case 102:
+            sb.writeCharCode(12);
+          case 110:
+            sb.writeCharCode(10);
+          case 114:
+            sb.writeCharCode(13);
+          case 116:
+            sb.writeCharCode(9);
+          case 117: // u
+            final hex = result.substring(i + 1, i + 5);
+            final code = int.parse(hex, radix: 16);
+            sb.writeCharCode(code);
+            i += 4;
+        }
+      } else {
+        sb.writeCharCode(c);
+      }
+      i++;
+    }
+
+    return sb.toString();
   }
 
   @override

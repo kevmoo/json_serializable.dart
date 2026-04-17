@@ -161,6 +161,8 @@ class StringJsonReader implements JsonReader {
   String _readString() {
     _index++; // consume initial '"'
     final start = _index;
+    StringBuffer? sb;
+
     while (_index < _source.length) {
       final c = _source.codeUnitAt(_index);
       if (c == 34) break; // '"'
@@ -169,33 +171,60 @@ class StringJsonReader implements JsonReader {
       }
       if (c == 92) {
         // '\\'
+        sb ??= StringBuffer()..write(_source.substring(start, _index));
         _index++; // skip escape
         if (_index >= _source.length) {
           throw const FormatException('Unterminated escape');
         }
         final esc = _source.codeUnitAt(_index);
-        if (esc != 34 &&
-            esc != 92 &&
-            esc != 47 &&
-            esc != 98 &&
-            esc != 102 &&
-            esc != 110 &&
-            esc != 114 &&
-            esc != 116 &&
-            esc != 117) {
-          throw FormatException(
-            'Invalid escape sequence: \\${String.fromCharCode(esc)}',
-          );
+        switch (esc) {
+          case 34:
+            sb.writeCharCode(34);
+          case 92:
+            sb.writeCharCode(92);
+          case 47:
+            sb.writeCharCode(47);
+          case 98:
+            sb.writeCharCode(8);
+          case 102:
+            sb.writeCharCode(12);
+          case 110:
+            sb.writeCharCode(10);
+          case 114:
+            sb.writeCharCode(13);
+          case 116:
+            sb.writeCharCode(9);
+          case 117: // u
+            _index++;
+            if (_index + 4 > _source.length) {
+              throw const FormatException('Invalid unicode escape');
+            }
+            final hex = _source.substring(_index, _index + 4);
+            try {
+              final code = int.parse(hex, radix: 16);
+              sb.writeCharCode(code);
+            } catch (e) {
+              throw const FormatException('Invalid unicode escape');
+            }
+            _index += 3; // skip 3, loop will increment 4th
+          default:
+            throw FormatException(
+              'Invalid escape sequence: \\${String.fromCharCode(esc)}',
+            );
         }
+      } else {
+        sb?.writeCharCode(c);
       }
       _index++;
     }
+
     if (_index >= _source.length) {
       throw const FormatException('Unterminated string');
     }
-    final s = _source.substring(start, _index);
+    final result =
+        sb == null ? _source.substring(start, _index) : sb.toString();
     _index++; // consume closing '"'
-    return s;
+    return result;
   }
 
   @override

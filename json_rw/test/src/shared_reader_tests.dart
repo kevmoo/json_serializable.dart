@@ -45,13 +45,22 @@ void declareReaderTests(JsonReader Function(String json) createReader) {
   });
 
   test('skip value', () {
-    final reader = createReader('{"tags":["a","b"],"age":30}')..beginObject();
+    final reader = createReader(
+      '{"tags":["a","b"],"age":30,"flag":true,"n":null}',
+    )..beginObject();
     check(reader.nextName()).equals('tags');
     reader.skipValue(); // Skips the array
 
     check(reader.nextName()).equals('age');
     check(reader.nextNumber()).equals(30);
-    reader.endObject();
+
+    check(reader.nextName()).equals('flag');
+    reader.skipValue(); // Skips true
+
+    check(reader.nextName()).equals('n');
+    reader
+      ..skipValue() // Skips null
+      ..endObject();
   });
 
   test('read with whitespace', () {

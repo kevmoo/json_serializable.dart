@@ -127,9 +127,21 @@ class ChunkedJsonReader implements JsonReader {
     _afterValue();
   }
 
+  void _consumeComma() {
+    _hasToken = false; // consume ','
+    _commaConsumed = true;
+    if (_stack.isNotEmpty && _stack.last == _Scope.object) {
+      _expectName = true;
+    }
+  }
+
   @override
   bool hasNext() {
-    final token = peek();
+    var token = peek();
+    if (token == JsonToken.comma) {
+      _consumeComma();
+      token = peek();
+    }
     if (token == JsonToken.endObject || token == JsonToken.endArray) {
       if (_commaConsumed) {
         throw const FormatException('Trailing comma is not allowed');
@@ -143,11 +155,7 @@ class ChunkedJsonReader implements JsonReader {
   void _afterValue() {
     final token = peek();
     if (token == JsonToken.comma) {
-      _hasToken = false; // consume ','
-      _commaConsumed = true;
-      if (_stack.isNotEmpty && _stack.last == _Scope.object) {
-        _expectName = true;
-      }
+      _consumeComma();
     }
   }
 

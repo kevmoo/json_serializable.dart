@@ -1,5 +1,7 @@
 import 'src/json_rw_benchmark.dart';
 import 'src/json_rw_chunked_read_benchmark.dart';
+import 'src/json_rw_file_pull_benchmark.dart';
+import 'src/json_rw_file_push_benchmark.dart';
 import 'src/json_rw_read_benchmark.dart';
 import 'src/json_rw_utf8_benchmark.dart';
 import 'src/json_rw_utf8_read_benchmark.dart';
@@ -13,7 +15,7 @@ void main(List<String> arguments) {
   final runAll = arguments.isEmpty || arguments.contains('all');
 
   var executed = 0;
-  benchmarks.forEach((name, run) {
+  _benchmarks.forEach((name, run) {
     if (runAll || arguments.contains(name)) {
       run();
       executed++;
@@ -22,11 +24,11 @@ void main(List<String> arguments) {
 
   if (executed == 0) {
     print('No benchmarks matched the arguments: $arguments');
-    print('Available benchmarks: ${benchmarks.keys.join(', ')}');
+    print('Available benchmarks: ${_benchmarks.keys.join(', ')}');
   }
 }
 
-final benchmarks = <String, void Function()>{
+final _benchmarks = <String, void Function()>{
   'json_serializable': const JsonSerializableBenchmark().report,
   'json_rw': const JsonRwBenchmark().report,
   'json_serializable_utf8': const JsonSerializableUtf8Benchmark().report,
@@ -52,4 +54,6 @@ final benchmarks = <String, void Function()>{
   'json_serializable_utf8_read_small':
       const JsonSerializableUtf8ReadSmallBenchmark().report,
   'json_rw_utf8_read_small': const JsonRwUtf8ReadSmallBenchmark().report,
+  'json_rw_file_pull': () => JsonRwFilePullBenchmark().report(),
+  'json_rw_file_push': () => JsonRwFilePushBenchmark().report(),
 };

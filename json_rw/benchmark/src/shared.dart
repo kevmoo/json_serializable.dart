@@ -37,3 +37,16 @@ abstract class JsonBenchmarkBase extends BenchmarkBase {
 
   void runImpl();
 }
+
+abstract class AsyncJsonBenchmarkBase extends AsyncBenchmarkBase {
+  const AsyncJsonBenchmarkBase(super.name);
+
+  @override
+  Future<void> run() async {
+    Timeline.startSync(name);
+    await runImpl();
+    Timeline.finishSync();
+  }
+
+  Future<void> runImpl();
+}

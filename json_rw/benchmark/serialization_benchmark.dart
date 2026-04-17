@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'src/json_rw_benchmark.dart';
 import 'src/json_rw_chunked_read_benchmark.dart';
 import 'src/json_rw_file_pull_benchmark.dart';
@@ -11,16 +13,16 @@ import 'src/json_serializable_read_benchmark.dart';
 import 'src/json_serializable_utf8_benchmark.dart';
 import 'src/json_serializable_utf8_read_benchmark.dart';
 
-void main(List<String> arguments) {
+Future<void> main(List<String> arguments) async {
   final runAll = arguments.isEmpty || arguments.contains('all');
 
   var executed = 0;
-  _benchmarks.forEach((name, run) {
-    if (runAll || arguments.contains(name)) {
-      run();
+  for (final entry in _benchmarks.entries) {
+    if (runAll || arguments.contains(entry.key)) {
+      await entry.value();
       executed++;
     }
-  });
+  }
 
   if (executed == 0) {
     print('No benchmarks matched the arguments: $arguments');
@@ -28,7 +30,7 @@ void main(List<String> arguments) {
   }
 }
 
-final _benchmarks = <String, void Function()>{
+final _benchmarks = <String, FutureOr<void> Function()>{
   'json_serializable': const JsonSerializableBenchmark().report,
   'json_rw': const JsonRwBenchmark().report,
   'json_serializable_utf8': const JsonSerializableUtf8Benchmark().report,

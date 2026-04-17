@@ -53,14 +53,19 @@ final class ByteChunkedLexer {
 
   bool _scanString() {
     final start = _index;
-    while (_index < _currentChunk.length) {
-      final c = _currentChunk[_index];
+    final chunk = _currentChunk;
+    while (_index < chunk.length) {
+      final c = chunk[_index];
       if (c < 32) {
         throw FormatException('Control character in string: $c');
       }
       if (c == 34) {
         // '"'
-        _bytesBuilder.add(_currentChunk.sublist(start, _index));
+        if (chunk is Uint8List) {
+          _bytesBuilder.add(Uint8List.sublistView(chunk, start, _index));
+        } else {
+          _bytesBuilder.add(chunk.sublist(start, _index));
+        }
         _index++; // consume '"'
         _isPartial = false;
         _state = _$State.scanning;
@@ -68,15 +73,19 @@ final class ByteChunkedLexer {
       }
       if (c == 92) {
         // '\\'
-        _bytesBuilder.add(_currentChunk.sublist(start, _index));
+        if (chunk is Uint8List) {
+          _bytesBuilder.add(Uint8List.sublistView(chunk, start, _index));
+        } else {
+          _bytesBuilder.add(chunk.sublist(start, _index));
+        }
         _index++; // skip '\\'
-        if (_index >= _currentChunk.length) {
+        if (_index >= chunk.length) {
           _state = _$State.escape;
           _isPartial = true;
           return true;
         }
         // Handle escape in chunk
-        final esc = _currentChunk[_index];
+        final esc = chunk[_index];
         _decodeEscape(esc);
         _index++;
         // Continue scanning after escape
@@ -84,7 +93,11 @@ final class ByteChunkedLexer {
       }
       _index++;
     }
-    _bytesBuilder.add(_currentChunk.sublist(start, _index));
+    if (chunk is Uint8List) {
+      _bytesBuilder.add(Uint8List.sublistView(chunk, start, _index));
+    } else {
+      _bytesBuilder.add(chunk.sublist(start, _index));
+    }
     _isPartial = true;
     return true;
   }
@@ -246,8 +259,9 @@ final class ByteChunkedLexer {
 
         case _$State.number:
           final start = _index;
-          while (_index < _currentChunk.length) {
-            final c = _currentChunk[_index];
+          final chunk = _currentChunk;
+          while (_index < chunk.length) {
+            final c = chunk[_index];
             if ((c >= 48 && c <= 57) ||
                 c == 45 ||
                 c == 46 ||
@@ -259,8 +273,12 @@ final class ByteChunkedLexer {
               break;
             }
           }
-          _bytesBuilder.add(_currentChunk.sublist(start, _index));
-          if (_index < _currentChunk.length) {
+          if (chunk is Uint8List) {
+            _bytesBuilder.add(Uint8List.sublistView(chunk, start, _index));
+          } else {
+            _bytesBuilder.add(chunk.sublist(start, _index));
+          }
+          if (_index < chunk.length) {
             _state = _$State.scanning;
             _currentToken = JsonToken.number;
 

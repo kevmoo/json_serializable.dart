@@ -37,8 +37,11 @@ void declareReaderTests(JsonReader Function(String json) createReader) {
 
   test('read primitives', () {
     final reader = createReader('[true,false,null]')..beginArray();
+    check(reader.hasNext()).isTrue();
     check(reader.nextBool()).isTrue();
+    check(reader.hasNext()).isTrue();
     check(reader.nextBool()).isFalse();
+    check(reader.hasNext()).isTrue();
     reader
       ..nextNull()
       ..endArray();
@@ -48,15 +51,19 @@ void declareReaderTests(JsonReader Function(String json) createReader) {
     final reader = createReader(
       '{"tags":["a","b"],"age":30,"flag":true,"n":null}',
     )..beginObject();
+    check(reader.hasNext()).isTrue();
     check(reader.nextName()).equals('tags');
     reader.skipValue(); // Skips the array
 
+    check(reader.hasNext()).isTrue();
     check(reader.nextName()).equals('age');
     check(reader.nextNumber()).equals(30);
 
+    check(reader.hasNext()).isTrue();
     check(reader.nextName()).equals('flag');
     reader.skipValue(); // Skips true
 
+    check(reader.hasNext()).isTrue();
     check(reader.nextName()).equals('n');
     reader
       ..skipValue() // Skips null
@@ -84,9 +91,11 @@ void declareReaderTests(JsonReader Function(String json) createReader) {
 
   test('skip object', () {
     final reader = createReader('{"obj":{"a":1},"age":30}')..beginObject();
+    check(reader.hasNext()).isTrue();
     check(reader.nextName()).equals('obj');
     reader.skipValue(); // Skips the object
 
+    check(reader.hasNext()).isTrue();
     check(reader.nextName()).equals('age');
     check(reader.nextNumber()).equals(30);
     reader.endObject();
@@ -99,7 +108,9 @@ void declareReaderTests(JsonReader Function(String json) createReader) {
 
   test('read doubles and negatives', () {
     final reader = createReader('[-1.5, 42]')..beginArray();
+    check(reader.hasNext()).isTrue();
     check(reader.nextNumber()).equals(-1.5);
+    check(reader.hasNext()).isTrue();
     check(reader.nextNumber()).equals(42);
     reader.endArray();
   });

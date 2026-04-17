@@ -79,5 +79,32 @@ void main() {
       check(lexer.currentToken).equals(JsonToken.string);
       check(lexer.stringValue).equals(' ');
     });
+
+    test('other escapes', () {
+      final lexer = ByteChunkedLexer()
+        ..addChunk(utf8.encode('"\\n\\t\\\\\\/\\b\\f\\r"'));
+
+      check(lexer.nextToken()).isTrue();
+      check(lexer.currentToken).equals(JsonToken.string);
+      check(lexer.stringValue).equals('\n\t\\/\b\f\r');
+    });
+
+    test('escaped quote', () {
+      final lexer = ByteChunkedLexer()
+        ..addChunk(utf8.encode('"\\""'));
+
+      check(lexer.nextToken()).isTrue();
+      check(lexer.currentToken).equals(JsonToken.string);
+      check(lexer.stringValue).equals('"');
+    });
+
+    test('non-Uint8List chunk', () {
+      final lexer = ByteChunkedLexer()
+        ..addChunk([34, 97, 98, 99, 34]); // "abc"
+
+      check(lexer.nextToken()).isTrue();
+      check(lexer.currentToken).equals(JsonToken.string);
+      check(lexer.stringValue).equals('abc');
+    });
   });
 }

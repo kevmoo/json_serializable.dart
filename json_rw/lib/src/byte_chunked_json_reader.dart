@@ -18,8 +18,14 @@ class ByteChunkedJsonReader implements JsonReader {
   final List<int>? Function()? _onChunkNeeded;
 
   /// Creates a [ByteChunkedJsonReader] for parsing JSON in chunks.
-  ByteChunkedJsonReader({List<int>? Function()? onChunkNeeded})
-    : _onChunkNeeded = onChunkNeeded;
+  ByteChunkedJsonReader({
+    List<int>? Function()? onChunkNeeded,
+    List<int>? initialChunk,
+  }) : _onChunkNeeded = onChunkNeeded {
+    if (initialChunk != null) {
+      addChunk(initialChunk);
+    }
+  }
 
   /// Adds a new chunk of data to process.
   void addChunk(List<int> chunk) {

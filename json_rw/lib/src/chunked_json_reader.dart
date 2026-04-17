@@ -75,8 +75,14 @@ class ChunkedJsonReader implements JsonReader {
   /// `null` if the data stream is fully exhausted. This enables
   /// memory-efficient pull-parsing over fragmented data sources without full
   /// buffering.
-  ChunkedJsonReader({String? Function()? onChunkNeeded})
-    : _onChunkNeeded = onChunkNeeded;
+  ChunkedJsonReader({
+    String? Function()? onChunkNeeded,
+    String? initialChunk,
+  }) : _onChunkNeeded = onChunkNeeded {
+    if (initialChunk != null) {
+      addChunk(initialChunk);
+    }
+  }
 
   /// Adds a new chunk of data to process.
   void addChunk(String chunk) {

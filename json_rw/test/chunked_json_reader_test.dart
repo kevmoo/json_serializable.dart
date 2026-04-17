@@ -6,9 +6,9 @@ import 'src/shared_reader_tests.dart';
 void main() {
   group('ChunkedJsonReader', () {
     test('simple object', () {
-      final reader = ChunkedJsonReader()
-        ..addChunk('{"name": "John", "age": 30}')
-        ..beginObject();
+      final reader = ChunkedJsonReader(
+        initialChunk: '{"name": "John", "age": 30}',
+      )..beginObject();
 
       check(reader.hasNext()).isTrue();
       check(reader.nextName()).equals('name');
@@ -23,8 +23,7 @@ void main() {
     });
 
     test('split object across chunks', () {
-      final reader = ChunkedJsonReader()
-        ..addChunk('{"name": "Jo')
+      final reader = ChunkedJsonReader(initialChunk: '{"name": "Jo')
         ..beginObject();
 
       check(reader.hasNext()).isTrue();
@@ -52,12 +51,12 @@ void main() {
     });
 
     test('unterminated string throws NeedsMoreDataException', () {
-      final reader = ChunkedJsonReader()..addChunk('"abc');
+      final reader = ChunkedJsonReader(initialChunk: '"abc');
       check(reader.nextString).throws<NeedsMoreDataException>();
     });
   });
 
   group('ChunkedJsonReader - Shared Tests', () {
-    declareReaderTests((json) => ChunkedJsonReader()..addChunk(json));
+    declareReaderTests((json) => ChunkedJsonReader(initialChunk: json));
   });
 }

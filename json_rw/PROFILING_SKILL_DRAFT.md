@@ -41,6 +41,20 @@ final response = await sendRpc(
 );
 ```
 
+### Avoid `List.sublist` in Tight Loops
+When processing chunks of data (e.g., in a lexer), avoid using `List.sublist` to extract parts of the chunk for processing or accumulation. `sublist` allocates a new list every time, which creates significant memory pressure.
+
+**Prefer**: Using `Uint8List.sublistView` to create a zero-copy view of the chunk if it is a `Uint8List`.
+
+```dart
+final chunk = _currentChunk;
+if (chunk is Uint8List) {
+  _bytesBuilder.add(Uint8List.sublistView(chunk, start, _index));
+} else {
+  _bytesBuilder.add(chunk.sublist(start, _index));
+}
+```
+
 ### Timeline Events
 While CPU sampling provides a statistical view of hot spots, `dart:developer`'s `Timeline` allows you to inject explicit, high-fidelity events into the timeline. These are visible in Dart DevTools.
 

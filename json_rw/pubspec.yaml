@@ -1,0 +1,5 @@
+name: json_rw
+description: Streaming encode/decode of JSON without intermediate objects.
+version: 0.1.0-dev
+environment:
+  sdk: ^3.9.0

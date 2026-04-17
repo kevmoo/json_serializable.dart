@@ -11,5 +11,6 @@ workspace:
   - checked_yaml
   - example
   - json_annotation
+  - json_rw
   - json_serializable
   - shared_test

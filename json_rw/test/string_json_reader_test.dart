@@ -55,5 +55,49 @@ void main() {
       check(reader.nextNumber()).equals(30);
       reader.endObject();
     });
+
+    test('read with whitespace', () {
+      final reader = JsonReader.fromString(
+        '  { "name" : "John" , "age" : 30 }  ',
+      );
+
+      check(reader.peek()).equals(JsonToken.beginObject);
+      reader.beginObject();
+
+      check(reader.hasNext()).isTrue();
+      check(reader.nextName()).equals('name');
+      check(reader.nextString()).equals('John');
+
+      check(reader.hasNext()).isTrue();
+      check(reader.nextName()).equals('age');
+      check(reader.nextNumber()).equals(30);
+
+      check(reader.hasNext()).isFalse();
+      reader.endObject();
+      check(reader.peek()).equals(JsonToken.eof);
+    });
+
+    test('skip object', () {
+      final reader = JsonReader.fromString('{"obj":{"a":1},"age":30}')
+        ..beginObject();
+      check(reader.nextName()).equals('obj');
+      reader.skipValue(); // Skips the object
+
+      check(reader.nextName()).equals('age');
+      check(reader.nextNumber()).equals(30);
+      reader.endObject();
+    });
+
+    test('invalid JSON', () {
+      final reader = JsonReader.fromString('invalid');
+      check(reader.beginObject).throws<FormatException>();
+    });
+
+    test('read doubles and negatives', () {
+      final reader = JsonReader.fromString('[-1.5, 42]')..beginArray();
+      check(reader.nextNumber()).equals(-1.5);
+      check(reader.nextNumber()).equals(42);
+      reader.endArray();
+    });
   });
 }

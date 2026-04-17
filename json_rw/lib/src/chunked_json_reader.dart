@@ -8,10 +8,26 @@ enum _Scope { object, array }
 class ChunkedJsonReader implements JsonReader {
   final ChunkedLexer _lexer = ChunkedLexer();
   bool _hasToken = false;
-  
+
   final List<_Scope> _stack = [];
   bool _expectName = false;
   bool _commaConsumed = false;
+
+  /// Callback to fetch more data when needed.
+  final String? Function()? _onChunkNeeded;
+
+  /// Creates a [ChunkedJsonReader] for parsing JSON in chunks.
+  ///
+  /// The [onChunkNeeded] callback is invoked synchronously when the reader
+  /// reaches the end of the current chunk but needs more characters to complete
+  /// a token (like a string or number) or to find the next token.
+  ///
+  /// The callback should return the next chunk of JSON data as a [String], or
+  /// `null` if the data stream is fully exhausted. This enables
+  /// memory-efficient pull-parsing over fragmented data sources without full
+  /// buffering.
+  ChunkedJsonReader({String? Function()? onChunkNeeded})
+    : _onChunkNeeded = onChunkNeeded;
 
   /// Adds a new chunk of data to process.
   void addChunk(String chunk) {
@@ -21,7 +37,33 @@ class ChunkedJsonReader implements JsonReader {
 
   bool _ensureToken() {
     if (_hasToken) return true;
-    return _hasToken = _lexer.nextToken();
+    while (!_lexer.nextToken()) {
+      if (_onChunkNeeded != null) {
+        final next = _onChunkNeeded();
+        if (next != null) {
+          addChunk(next);
+          continue;
+        }
+      }
+      return false;
+    }
+    _hasToken = true;
+    return true;
+  }
+
+  void _ensureFullToken(String errorMessage) {
+    while (_lexer.isPartial) {
+      if (_onChunkNeeded != null) {
+        final next = _onChunkNeeded();
+        if (next != null) {
+          addChunk(next);
+          _hasToken = false;
+          _ensureToken();
+          continue;
+        }
+      }
+      throw FormatException(errorMessage);
+    }
   }
 
   @override
@@ -114,9 +156,8 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.name) {
       throw const FormatException('Expected property name');
     }
-    if (_lexer.isPartial) {
-      throw const FormatException('Partial name not ready');
-    }
+    _ensureFullToken('Partial name not ready');
+
     final name = _lexer.stringValue;
     _hasToken = false; // consume string
     _expectName = false;
@@ -135,9 +176,8 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.string) {
       throw const FormatException('Expected string');
     }
-    if (_lexer.isPartial) {
-      throw const FormatException('Partial string not ready');
-    }
+    _ensureFullToken('Partial string not ready');
+
     final value = _lexer.stringValue;
     _hasToken = false; // consume
     _afterValue();
@@ -149,9 +189,8 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.boolean) {
       throw const FormatException('Expected boolean');
     }
-    if (_lexer.isPartial) {
-      throw const FormatException('Partial keyword not ready');
-    }
+    _ensureFullToken('Partial keyword not ready');
+
     final value = _lexer.stringValue == 'true';
     _hasToken = false; // consume
     _afterValue();
@@ -163,9 +202,8 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.number) {
       throw const FormatException('Expected number');
     }
-    if (_lexer.isPartial) {
-      throw const FormatException('Partial number not ready');
-    }
+    _ensureFullToken('Partial number not ready');
+
     final value = num.parse(_lexer.stringValue);
     _hasToken = false; // consume
     _afterValue();
@@ -177,9 +215,8 @@ class ChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.nullToken) {
       throw const FormatException('Expected null');
     }
-    if (_lexer.isPartial) {
-      throw const FormatException('Partial null not ready');
-    }
+    _ensureFullToken('Partial null not ready');
+
     _hasToken = false; // consume
     _afterValue();
   }

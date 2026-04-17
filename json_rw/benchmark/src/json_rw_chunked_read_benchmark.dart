@@ -15,7 +15,15 @@ class JsonRwChunkedReadBenchmark extends JsonBenchmarkBase {
           i, end < largeJsonString.length ? end : largeJsonString.length));
     }
 
-    final reader = ChunkedSequenceJsonReader(chunks.iterator);
+    var chunkIndex = 0;
+    final reader = ChunkedJsonReader(
+      onChunkNeeded: () {
+        if (chunkIndex < chunks.length) {
+          return chunks[chunkIndex++];
+        }
+        return null;
+      },
+    );
     ComplexObject.fromReader(reader);
   }
 }

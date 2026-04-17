@@ -32,38 +32,23 @@ class StringJsonReader implements JsonReader {
     final c = _source[_index];
     if (_expectName) {
       if (c == '"') {
-        _peeked = JsonToken.name;
-        return _peeked!;
+        return _peeked = JsonToken.name;
       } else if (c == '}') {
-        _peeked = JsonToken.endObject;
-        return _peeked!;
+        return _peeked = JsonToken.endObject;
       }
     }
 
-    switch (c) {
-      case '{':
-        _peeked = JsonToken.beginObject;
-      case '}':
-        _peeked = JsonToken.endObject;
-      case '[':
-        _peeked = JsonToken.beginArray;
-      case ']':
-        _peeked = JsonToken.endArray;
-      case '"':
-        _peeked = JsonToken.string;
-      case 't':
-      case 'f':
-        _peeked = JsonToken.boolean;
-      case 'n':
-        _peeked = JsonToken.nullToken;
-      default:
-        if (_isDigit(c) || c == '-') {
-          _peeked = JsonToken.number;
-        } else {
-          throw FormatException('Unexpected character: $c');
-        }
-    }
-    return _peeked!;
+    return switch (c) {
+      '{' => JsonToken.beginObject,
+      '}' => JsonToken.endObject,
+      '[' => JsonToken.beginArray,
+      ']' => JsonToken.endArray,
+      '"' => JsonToken.string,
+      't' || 'f' => JsonToken.boolean,
+      'n' => JsonToken.nullToken,
+      _ when _isDigit(c) || c == '-' => JsonToken.number,
+      _ => throw FormatException('Unexpected character: $c'),
+    };
   }
 
   bool _isDigit(String c) => c.codeUnitAt(0) >= 48 && c.codeUnitAt(0) <= 57;

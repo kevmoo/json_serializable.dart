@@ -1,6 +1,6 @@
 import 'package:json_rw/json_rw.dart';
 
-part 'example.g.dart';
+part 'example.rw.dart';
 
 class Person {
   final String name;

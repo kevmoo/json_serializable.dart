@@ -1,8 +1,11 @@
+import 'package:json_annotation/json_annotation.dart';
 import 'package:json_rw/json_rw.dart';
 import 'simple_object.dart';
 
 part 'complex_object.g.dart';
+part 'complex_object.rw.dart';
 
+@JsonSerializable()
 class ComplexObject {
   final String name;
   final int age;
@@ -15,6 +18,11 @@ class ComplexObject {
     required this.objects,
     required this.map,
   });
+
+  factory ComplexObject.fromJson(Map<String, dynamic> json) =>
+      _$ComplexObjectFromJson(json);
+
+  Map<String, dynamic> toJson() => _$ComplexObjectToJson(this);
 
   factory ComplexObject.fromReader(JsonReader reader) =>
       _$ComplexObjectFromReader(reader);

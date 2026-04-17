@@ -1,31 +1,13 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
 part of 'simple_object.dart';
 
-SimpleObject _$SimpleObjectFromReader(JsonReader reader) {
-  int? value;
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
 
-  reader.beginObject();
-  while (reader.hasNext()) {
-    final propertyName = reader.nextName();
-    switch (propertyName) {
-      case 'value':
-        value = reader.nextNumber().toInt();
-      default:
-        reader.skipValue();
-    }
-  }
-  reader.endObject();
+SimpleObject _$SimpleObjectFromJson(Map<String, dynamic> json) =>
+    SimpleObject((json['value'] as num).toInt());
 
-  if (value == null) {
-    throw const FormatException('Missing required field: value');
-  }
-
-  return SimpleObject(value);
-}
-
-void _$SimpleObjectToWriter(SimpleObject instance, JsonWriter writer) {
-  writer
-    ..beginObject()
-    ..name('value')
-    ..writeNumber(instance.value)
-    ..endObject();
-}
+Map<String, dynamic> _$SimpleObjectToJson(SimpleObject instance) =>
+    <String, dynamic>{'value': instance.value};

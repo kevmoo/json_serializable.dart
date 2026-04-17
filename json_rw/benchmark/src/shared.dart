@@ -15,8 +15,18 @@ final largeObject = ComplexObject(
 final largeJsonString = json.encode(largeObject.toJson());
 final largeJsonBytes = utf8.encode(largeJsonString);
 
+final smallObject = ComplexObject(
+  name: 'Small Object',
+  age: 42,
+  objects: List.generate(5, SimpleObject.new),
+  map: {for (var i = 0; i < 5; i++) 'key$i': 'value$i'},
+);
+
+final smallJsonString = json.encode(smallObject.toJson());
+final smallJsonBytes = utf8.encode(smallJsonString);
+
 abstract class JsonBenchmarkBase extends BenchmarkBase {
-  JsonBenchmarkBase(super.name);
+  const JsonBenchmarkBase(super.name);
 
   @override
   void run() {

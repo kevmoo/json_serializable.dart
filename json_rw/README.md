@@ -4,13 +4,13 @@ Streaming encode/decode of JSON without intermediate objects.
 
 ## Performance Benchmarks
 
-Here are the results comparing `json_rw` with `json_serializable` for a large object (1000 items).
-
-| Operation | `json_serializable` (Median) | `json_rw` (Median) | Winner (% faster) |
-| :--- | :--- | :--- | :--- |
-| **Write String** | **2108.36 µs** | 3283.95 µs | `json_serializable` (~55.8% faster) |
-| **Write UTF-8** | 2367.04 µs | **538.90 µs** | `json_rw` (~339.2% faster) |
-| **Read String** | **1030.80 µs** | 2188.54 µs | `json_serializable` (~112.3% faster) |
-| **Read UTF-8** | 1064.85 µs | **1011.95 µs** | `json_rw` (~5.2% faster) |
-
-*Note: `json_serializable` leverages the highly optimized native JSON encoder/decoder in the Dart VM, while `json_rw` is pure Dart.*
+| Mode | Size | Format | `json_serializable` | `json_rw` | Winner (% faster) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Write | Large | String | 1901.78 µs | 3076.35 µs | `json_serializable` (61.8% faster) |
+| Write | Large | UTF-8 | 2118.38 µs | 504.59 µs | `json_rw` (319.8% faster) |
+| Read | Large | String | 905.64 µs | 2022.05 µs | `json_serializable` (123.3% faster) |
+| Read | Large | UTF-8 | 953.83 µs | 914.51 µs | `json_rw` (4.3% faster) |
+| Write | Small | String | 18.55 µs | 47.94 µs | `json_serializable` (158.5% faster) |
+| Write | Small | UTF-8 | 21.78 µs | 7.75 µs | `json_rw` (181.1% faster) |
+| Read | Small | String | 13.17 µs | 24.66 µs | `json_serializable` (87.2% faster) |
+| Read | Small | UTF-8 | 14.05 µs | 11.93 µs | `json_rw` (17.8% faster) |

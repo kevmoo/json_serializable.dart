@@ -9,12 +9,8 @@ class JsonReaderConverter<T> extends Converter<String, T> {
 
   @override
   T convert(String input) {
-    final builder = _createBuilder();
     final reader = ChunkedJsonReader()..addChunk(input);
-    if (builder.hydrate(reader)) {
-      return builder.build();
-    }
-    throw const FormatException('Unexpected end of JSON input');
+    return _createBuilder().parse(reader);
   }
 
   @override

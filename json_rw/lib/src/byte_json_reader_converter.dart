@@ -11,12 +11,8 @@ class ByteJsonReaderConverter<T> extends Converter<List<int>, T> {
 
   @override
   T convert(List<int> input) {
-    final builder = _createBuilder();
     final reader = ByteChunkedJsonReader()..addChunk(input);
-    if (builder.hydrate(reader)) {
-      return builder.build();
-    }
-    throw const FormatException('Unexpected end of JSON input');
+    return _createBuilder().parse(reader);
   }
 
   @override

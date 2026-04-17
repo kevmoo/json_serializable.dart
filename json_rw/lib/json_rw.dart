@@ -1,3 +1,6 @@
+export 'src/byte_chunked_json_reader.dart';
+export 'src/byte_json_reader_converter.dart';
+export 'src/byte_json_writer_converter.dart';
 export 'src/chunked_json_reader.dart';
 export 'src/json_reader.dart';
 export 'src/json_reader_converter.dart';

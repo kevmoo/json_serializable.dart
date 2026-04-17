@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'src/json_rw_benchmark.dart';
+import 'src/json_rw_byte_file_push_benchmark.dart';
 import 'src/json_rw_chunked_read_benchmark.dart';
 import 'src/json_rw_file_pull_benchmark.dart';
 import 'src/json_rw_file_push_benchmark.dart';
@@ -73,5 +74,6 @@ final _benchmarks = <String, FutureOr<void> Function()>{
   'json_rw_utf8_read_small': const JsonRwUtf8ReadSmallBenchmark().report,
   'json_rw_file_pull': () => JsonRwFilePullBenchmark().report(),
   'json_rw_file_push': () => JsonRwFilePushBenchmark().report(),
+  'json_rw_byte_file_push': () => JsonRwByteFilePushBenchmark().report(),
   'json_serializable_file': () => JsonSerializableFileBenchmark().report(),
 };

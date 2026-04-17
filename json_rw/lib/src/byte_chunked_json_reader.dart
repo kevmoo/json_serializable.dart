@@ -125,16 +125,20 @@ class ByteChunkedJsonReader implements JsonReader {
 
   @override
   bool hasNext() {
-    final token = peek();
-    if (token == JsonToken.endObject || token == JsonToken.endArray) {
-      return false;
-    }
-    if (_stack.isNotEmpty && !_expectName && !_commaConsumed) {
-      if (token == JsonToken.comma) {
-        _hasToken = false; // consume comma
-        _commaConsumed = true;
-        return hasNext();
+    var token = peek();
+    if (token == JsonToken.comma) {
+      _hasToken = false; // consume comma
+      _commaConsumed = true;
+      if (_stack.isNotEmpty && _stack.last == _ByteScope.object) {
+        _expectName = true;
       }
+      token = peek();
+    }
+    if (token == JsonToken.endObject || token == JsonToken.endArray) {
+      if (_commaConsumed) {
+        throw const FormatException('Trailing comma is not allowed');
+      }
+      return false;
     }
     return token != JsonToken.eof;
   }

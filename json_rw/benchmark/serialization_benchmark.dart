@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'src/json_rw_benchmark.dart';
 import 'src/json_rw_chunked_read_benchmark.dart';
@@ -16,6 +17,14 @@ import 'src/json_serializable_utf8_read_benchmark.dart';
 
 Future<void> main(List<String> arguments) async {
   final runAll = arguments.isEmpty || arguments.contains('all');
+  final profiling = Platform.environment['DART_PROFILING'] == 'true';
+
+  final iterator = profiling ? StreamIterator(stdin) : null;
+
+  if (profiling) {
+    print('READY');
+    await iterator!.moveNext();
+  }
 
   var executed = 0;
   for (final entry in _benchmarks.entries) {
@@ -28,6 +37,11 @@ Future<void> main(List<String> arguments) async {
   if (executed == 0) {
     print('No benchmarks matched the arguments: $arguments');
     print('Available benchmarks: ${_benchmarks.keys.join(', ')}');
+  }
+
+  if (profiling) {
+    print('DONE');
+    await iterator!.moveNext();
   }
 }
 

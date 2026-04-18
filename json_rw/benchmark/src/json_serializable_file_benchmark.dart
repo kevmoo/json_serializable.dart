@@ -10,6 +10,14 @@ class JsonSerializableFileBenchmark extends AsyncJsonBenchmarkBase {
   JsonSerializableFileBenchmark() : super('json_serializable_file');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.file,
+    impl: BenchmarkImpl.jsonSerializable,
+  );
+
+  @override
   Future<void> setup() async {
     _tempDir = Directory.systemTemp.createTempSync('json_rw_bench');
     _filePath = '${_tempDir!.path}/large.json';

@@ -1,3 +1,4 @@
+import 'bitmask_stack.dart';
 import 'chunked_lexer.dart';
 import 'json_reader.dart';
 import 'json_token.dart';
@@ -51,14 +52,12 @@ enum _NeedsMoreDataReason {
   const _NeedsMoreDataReason(this.message);
 }
 
-enum _Scope { object, array }
-
 /// A [JsonReader] that processes JSON in chunks.
 class ChunkedJsonReader implements JsonReader {
   final ChunkedLexer _lexer = ChunkedLexer();
+  final BitmaskStack _stack = BitmaskStack();
   bool _hasToken = false;
 
-  final List<_Scope> _stack = [];
   bool _expectName = false;
   bool _commaConsumed = false;
 
@@ -75,10 +74,8 @@ class ChunkedJsonReader implements JsonReader {
   /// `null` if the data stream is fully exhausted. This enables
   /// memory-efficient pull-parsing over fragmented data sources without full
   /// buffering.
-  ChunkedJsonReader({
-    String? Function()? onChunkNeeded,
-    String? initialChunk,
-  }) : _onChunkNeeded = onChunkNeeded {
+  ChunkedJsonReader({String? Function()? onChunkNeeded, String? initialChunk})
+    : _onChunkNeeded = onChunkNeeded {
     if (initialChunk != null) {
       addChunk(initialChunk);
     }
@@ -148,7 +145,7 @@ class ChunkedJsonReader implements JsonReader {
       throw const FormatException('Expected {');
     }
     _hasToken = false; // consume
-    _stack.add(_Scope.object);
+    _stack.pushObject();
     _expectName = true;
   }
 
@@ -158,8 +155,8 @@ class ChunkedJsonReader implements JsonReader {
       throw const FormatException('Expected }');
     }
     _hasToken = false; // consume
-    _stack.removeLast();
-    _expectName = _stack.isNotEmpty && _stack.last == _Scope.object;
+    _stack.popObject();
+    _expectName = _stack.isObjectScope;
     _afterValue();
   }
 
@@ -169,7 +166,7 @@ class ChunkedJsonReader implements JsonReader {
       throw const FormatException('Expected [');
     }
     _hasToken = false; // consume
-    _stack.add(_Scope.array);
+    _stack.pushArray();
     _expectName = false;
   }
 
@@ -179,15 +176,15 @@ class ChunkedJsonReader implements JsonReader {
       throw const FormatException('Expected ]');
     }
     _hasToken = false; // consume
-    _stack.removeLast();
-    _expectName = _stack.isNotEmpty && _stack.last == _Scope.object;
+    _stack.popArray();
+    _expectName = _stack.isObjectScope;
     _afterValue();
   }
 
   void _consumeComma() {
     _hasToken = false; // consume ','
     _commaConsumed = true;
-    if (_stack.isNotEmpty && _stack.last == _Scope.object) {
+    if (_stack.isObjectScope) {
       _expectName = true;
     }
   }

@@ -1,16 +1,20 @@
+import 'package:meta/meta.dart';
+import 'bitmask_stack.dart';
 import 'byte_chunked_lexer.dart';
 import 'chunked_json_reader.dart'; // For NeedsMoreDataException
 import 'json_reader.dart';
 import 'json_token.dart';
 
-enum _ByteScope { object, array }
-
 /// A [JsonReader] that processes JSON in chunks as bytes.
+///
+/// **EXPERIMENTAL**: This implementation is currently slower than decoding
+/// bytes to strings first (via `utf8.decoder`) and using `ChunkedJsonReader`,
+/// due to the highly optimized native UTF-8 decoder in the Dart VM.
+@experimental
 class ByteChunkedJsonReader implements JsonReader {
   final ByteChunkedLexer _lexer = ByteChunkedLexer();
+  final BitmaskStack _stack = BitmaskStack();
   bool _hasToken = false;
-
-  final List<_ByteScope> _stack = [];
   bool _expectName = false;
   bool _commaConsumed = false;
 
@@ -87,7 +91,7 @@ class ByteChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.beginObject) {
       throw const FormatException('Expected {');
     }
-    _stack.add(_ByteScope.object);
+    _stack.pushObject();
     _hasToken = false; // consume {
     _expectName = true;
     _commaConsumed = false;
@@ -95,13 +99,10 @@ class ByteChunkedJsonReader implements JsonReader {
 
   @override
   void endObject() {
-    if (_stack.isEmpty || _stack.last != _ByteScope.object) {
-      throw const FormatException('Not in an object');
-    }
     if (peek() != JsonToken.endObject) {
       throw const FormatException('Expected }');
     }
-    _stack.removeLast();
+    _stack.popObject();
     _hasToken = false; // consume }
     _afterValue();
   }
@@ -111,20 +112,17 @@ class ByteChunkedJsonReader implements JsonReader {
     if (peek() != JsonToken.beginArray) {
       throw const FormatException('Expected [');
     }
-    _stack.add(_ByteScope.array);
+    _stack.pushArray();
     _hasToken = false; // consume [
     _commaConsumed = false;
   }
 
   @override
   void endArray() {
-    if (_stack.isEmpty || _stack.last != _ByteScope.array) {
-      throw const FormatException('Not in an array');
-    }
     if (peek() != JsonToken.endArray) {
       throw const FormatException('Expected ]');
     }
-    _stack.removeLast();
+    _stack.popArray();
     _hasToken = false; // consume ]
     _afterValue();
   }
@@ -135,7 +133,7 @@ class ByteChunkedJsonReader implements JsonReader {
     if (token == JsonToken.comma) {
       _hasToken = false; // consume comma
       _commaConsumed = true;
-      if (_stack.isNotEmpty && _stack.last == _ByteScope.object) {
+      if (_stack.isObjectScope) {
         _expectName = true;
       }
       token = peek();

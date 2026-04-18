@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'package:benchmark_harness/benchmark_harness.dart';
@@ -25,7 +26,29 @@ final smallObject = ComplexObject(
 final smallJsonString = json.encode(smallObject.toJson());
 final smallJsonBytes = utf8.encode(smallJsonString);
 
-abstract class JsonBenchmarkBase extends BenchmarkBase {
+enum BenchmarkOp { read, write }
+
+enum BenchmarkSize { small, large }
+
+enum BenchmarkFormat { string, utf8, chunked, file }
+
+enum BenchmarkImpl { jsonRw, jsonSerializable }
+
+typedef BenchmarkMetadata = ({
+  BenchmarkOp op,
+  BenchmarkSize size,
+  BenchmarkFormat format,
+  BenchmarkImpl impl,
+});
+
+abstract interface class DescribedBenchmark {
+  BenchmarkMetadata get metadata;
+  String get name;
+  FutureOr<void> report();
+}
+
+abstract class JsonBenchmarkBase extends BenchmarkBase
+    implements DescribedBenchmark {
   const JsonBenchmarkBase(super.name);
 
   @override
@@ -38,7 +61,8 @@ abstract class JsonBenchmarkBase extends BenchmarkBase {
   void runImpl();
 }
 
-abstract class AsyncJsonBenchmarkBase extends AsyncBenchmarkBase {
+abstract class AsyncJsonBenchmarkBase extends AsyncBenchmarkBase
+    implements DescribedBenchmark {
   const AsyncJsonBenchmarkBase(super.name);
 
   @override

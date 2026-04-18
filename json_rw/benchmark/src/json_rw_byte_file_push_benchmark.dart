@@ -10,6 +10,14 @@ class JsonRwByteFilePushBenchmark extends AsyncJsonBenchmarkBase {
   JsonRwByteFilePushBenchmark() : super('json_rw_byte_file_push');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.file,
+    impl: BenchmarkImpl.jsonRw,
+  );
+
+  @override
   Future<void> setup() async {
     _tempDir = Directory.systemTemp.createTempSync('json_rw_bench');
     _filePath = '${_tempDir!.path}/large.json';

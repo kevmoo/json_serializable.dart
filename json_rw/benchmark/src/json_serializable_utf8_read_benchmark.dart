@@ -7,6 +7,14 @@ class JsonSerializableUtf8ReadBenchmark extends JsonBenchmarkBase {
     : super('json_serializable_utf8_read');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.utf8,
+    impl: BenchmarkImpl.jsonSerializable,
+  );
+
+  @override
   void runImpl() {
     final s = utf8.decode(largeJsonBytes);
     final map = json.decode(s) as Map<String, dynamic>;
@@ -17,6 +25,14 @@ class JsonSerializableUtf8ReadBenchmark extends JsonBenchmarkBase {
 class JsonSerializableUtf8ReadSmallBenchmark extends JsonBenchmarkBase {
   const JsonSerializableUtf8ReadSmallBenchmark()
     : super('json_serializable_utf8_read_small');
+
+  @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.small,
+    format: BenchmarkFormat.utf8,
+    impl: BenchmarkImpl.jsonSerializable,
+  );
 
   @override
   void runImpl() {

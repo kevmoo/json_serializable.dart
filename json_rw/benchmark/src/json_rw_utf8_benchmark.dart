@@ -6,6 +6,14 @@ class JsonRwUtf8Benchmark extends JsonBenchmarkBase {
   const JsonRwUtf8Benchmark() : super('json_rw_utf8');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.write,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.utf8,
+    impl: BenchmarkImpl.jsonRw,
+  );
+
+  @override
   void runImpl() {
     List<int>? resultBytes;
     final output = ByteConversionSink.withCallback((accumulated) {
@@ -20,6 +28,14 @@ class JsonRwUtf8Benchmark extends JsonBenchmarkBase {
 
 class JsonRwUtf8SmallBenchmark extends JsonBenchmarkBase {
   const JsonRwUtf8SmallBenchmark() : super('json_rw_utf8_small');
+
+  @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.write,
+    size: BenchmarkSize.small,
+    format: BenchmarkFormat.utf8,
+    impl: BenchmarkImpl.jsonRw,
+  );
 
   @override
   void runImpl() {

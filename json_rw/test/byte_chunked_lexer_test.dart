@@ -7,8 +7,9 @@ import 'package:test/scaffolding.dart';
 void main() {
   group('ByteChunkedLexer', () {
     test('simple tokens', () {
-      final lexer = ByteChunkedLexer()
-        ..addChunk(utf8.encode('{"name": "John"}'));
+      final lexer = ByteChunkedLexer(
+        initialChunk: utf8.encode('{"name": "John"}'),
+      );
 
       check(lexer.nextToken()).isTrue();
       check(lexer.currentToken).equals(JsonToken.beginObject);
@@ -29,7 +30,7 @@ void main() {
     });
 
     test('split string', () {
-      final lexer = ByteChunkedLexer()..addChunk(utf8.encode('"Hello '));
+      final lexer = ByteChunkedLexer(initialChunk: utf8.encode('"Hello '));
 
       check(lexer.nextToken()).isTrue();
       check(lexer.isPartial).isTrue();
@@ -42,7 +43,7 @@ void main() {
     });
 
     test('split keyword', () {
-      final lexer = ByteChunkedLexer()..addChunk(utf8.encode('tr'));
+      final lexer = ByteChunkedLexer(initialChunk: utf8.encode('tr'));
 
       check(lexer.nextToken()).isFalse(); // Needs more data
 
@@ -53,7 +54,7 @@ void main() {
     });
 
     test('split number', () {
-      final lexer = ByteChunkedLexer()..addChunk(utf8.encode('12'));
+      final lexer = ByteChunkedLexer(initialChunk: utf8.encode('12'));
 
       check(lexer.nextToken()).isFalse(); // Needs more data
 
@@ -72,8 +73,9 @@ void main() {
     });
 
     test('unicode escape', () {
-      final lexer = ByteChunkedLexer()
-        ..addChunk(utf8.encode('"\\u0020"')); // Space
+      final lexer = ByteChunkedLexer(
+        initialChunk: utf8.encode('"\\u0020"'),
+      ); // Space
 
       check(lexer.nextToken()).isTrue();
       check(lexer.currentToken).equals(JsonToken.string);
@@ -81,8 +83,9 @@ void main() {
     });
 
     test('other escapes', () {
-      final lexer = ByteChunkedLexer()
-        ..addChunk(utf8.encode('"\\n\\t\\\\\\/\\b\\f\\r"'));
+      final lexer = ByteChunkedLexer(
+        initialChunk: utf8.encode('"\\n\\t\\\\\\/\\b\\f\\r"'),
+      );
 
       check(lexer.nextToken()).isTrue();
       check(lexer.currentToken).equals(JsonToken.string);
@@ -90,8 +93,7 @@ void main() {
     });
 
     test('escaped quote', () {
-      final lexer = ByteChunkedLexer()
-        ..addChunk(utf8.encode('"\\""'));
+      final lexer = ByteChunkedLexer(initialChunk: utf8.encode('"\\""'));
 
       check(lexer.nextToken()).isTrue();
       check(lexer.currentToken).equals(JsonToken.string);
@@ -99,8 +101,9 @@ void main() {
     });
 
     test('non-Uint8List chunk', () {
-      final lexer = ByteChunkedLexer()
-        ..addChunk([34, 97, 98, 99, 34]); // "abc"
+      final lexer = ByteChunkedLexer(
+        initialChunk: [34, 97, 98, 99, 34],
+      ); // "abc"
 
       check(lexer.nextToken()).isTrue();
       check(lexer.currentToken).equals(JsonToken.string);

@@ -1,5 +1,11 @@
 import 'dart:io';
 
+import 'src/all_benchmarks.dart';
+import 'src/shared.dart';
+
+String _capitalize(String s) =>
+    s.isEmpty ? '' : '${s[0].toUpperCase()}${s.substring(1)}';
+
 void main(List<String> arguments) async {
   // Ensure CWD is the json_rw directory
   final currentDirParts = Directory.current.path.split(Platform.pathSeparator);
@@ -122,43 +128,34 @@ void main(List<String> arguments) async {
     print(line);
   }
 
-  compare('Write', 'Large', 'String', 'json_serializable', 'json_rw');
-  compare('Write', 'Large', 'UTF-8', 'json_serializable_utf8', 'json_rw_utf8');
-  compare('Read', 'Large', 'String', 'json_serializable_read', 'json_rw_read');
-  compare(
-    'Read',
-    'Large',
-    'UTF-8',
-    'json_serializable_utf8_read',
-    'json_rw_utf8_read',
-  );
+  // Find all pairs to compare
+  final baseBenchmarks =
+      benchmarks
+          .where((b) => b.metadata.impl == BenchmarkImpl.jsonSerializable)
+          .toList()
+        // Sort them to ensure consistent output order
+        ..sort((a, b) => a.name.compareTo(b.name));
 
-  compare(
-    'Write',
-    'Small',
-    'String',
-    'json_serializable_small',
-    'json_rw_small',
-  );
-  compare(
-    'Write',
-    'Small',
-    'UTF-8',
-    'json_serializable_utf8_small',
-    'json_rw_utf8_small',
-  );
-  compare(
-    'Read',
-    'Small',
-    'String',
-    'json_serializable_read_small',
-    'json_rw_read_small',
-  );
-  compare(
-    'Read',
-    'Small',
-    'UTF-8',
-    'json_serializable_utf8_read_small',
-    'json_rw_utf8_read_small',
-  );
+  for (final base in baseBenchmarks) {
+    DescribedBenchmark? match;
+    for (final b in benchmarks) {
+      if (b.metadata.impl == BenchmarkImpl.jsonRw &&
+          b.metadata.op == base.metadata.op &&
+          b.metadata.size == base.metadata.size &&
+          b.metadata.format == base.metadata.format) {
+        match = b;
+        break;
+      }
+    }
+
+    if (match != null) {
+      compare(
+        _capitalize(base.metadata.op.name),
+        _capitalize(base.metadata.size.name),
+        _capitalize(base.metadata.format.name),
+        base.name,
+        match.name,
+      );
+    }
+  }
 }

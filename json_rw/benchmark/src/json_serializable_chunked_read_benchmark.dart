@@ -7,6 +7,14 @@ class JsonSerializableChunkedReadBenchmark extends JsonBenchmarkBase {
     : super('json_serializable_chunked_read');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.chunked,
+    impl: BenchmarkImpl.jsonSerializable,
+  );
+
+  @override
   void runImpl() {
     Map<String, dynamic>? resultMap;
 

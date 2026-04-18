@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'bitmask_stack.dart';
 import 'json_reader.dart';
 import 'json_token.dart';
-
-enum _Scope { object, array }
 
 class Utf8JsonReader implements JsonReader {
   final List<int> _source;
   int _index = 0;
-  final List<_Scope> _stack = [];
+  final BitmaskStack _stack = BitmaskStack();
   JsonToken? _peeked;
   bool _expectName = false;
   bool _commaConsumed = false;
@@ -66,7 +65,7 @@ class Utf8JsonReader implements JsonReader {
     }
     _index++; // consume '{'
     _peeked = null;
-    _stack.add(_Scope.object);
+    _stack.pushObject();
     _expectName = true;
   }
 
@@ -77,8 +76,8 @@ class Utf8JsonReader implements JsonReader {
     }
     _index++; // consume '}'
     _peeked = null;
-    _stack.removeLast();
-    _expectName = _stack.isNotEmpty && _stack.last == _Scope.object;
+    _stack.popObject();
+    _expectName = _stack.isObjectScope;
     _afterValue();
   }
 
@@ -89,7 +88,7 @@ class Utf8JsonReader implements JsonReader {
     }
     _index++; // consume '['
     _peeked = null;
-    _stack.add(_Scope.array);
+    _stack.pushArray();
     _expectName = false;
   }
 
@@ -98,8 +97,8 @@ class Utf8JsonReader implements JsonReader {
     if (peek() != JsonToken.endArray) throw const FormatException('Expected ]');
     _index++; // consume ']'
     _peeked = null;
-    _stack.removeLast();
-    _expectName = _stack.isNotEmpty && _stack.last == _Scope.object;
+    _stack.popArray();
+    _expectName = _stack.isObjectScope;
     _afterValue();
   }
 
@@ -125,7 +124,7 @@ class Utf8JsonReader implements JsonReader {
       // ','
       _index++; // consume ','
       _commaConsumed = true;
-      if (_stack.isNotEmpty && _stack.last == _Scope.object) {
+      if (_stack.isObjectScope) {
         _expectName = true;
       }
     }

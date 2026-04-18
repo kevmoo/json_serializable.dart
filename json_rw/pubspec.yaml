@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   json_annotation: any
+  meta: any
 
 dev_dependencies:
   benchmark_harness: ^2.4.0

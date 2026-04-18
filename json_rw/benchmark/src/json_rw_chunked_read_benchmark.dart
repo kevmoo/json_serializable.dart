@@ -6,6 +6,14 @@ class JsonRwChunkedReadBenchmark extends JsonBenchmarkBase {
   const JsonRwChunkedReadBenchmark() : super('json_rw_chunked_read');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.chunked,
+    impl: BenchmarkImpl.jsonRw,
+  );
+
+  @override
   void runImpl() {
     final chunks = <String>[];
     const chunkSize = 1024;
@@ -34,6 +42,14 @@ class JsonRwChunkedReadBenchmark extends JsonBenchmarkBase {
 
 class JsonRwChunkedReadSmallBenchmark extends JsonBenchmarkBase {
   const JsonRwChunkedReadSmallBenchmark() : super('json_rw_chunked_read_small');
+
+  @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.small,
+    format: BenchmarkFormat.chunked,
+    impl: BenchmarkImpl.jsonRw,
+  );
 
   @override
   void runImpl() {

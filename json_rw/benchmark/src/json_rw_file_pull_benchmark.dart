@@ -11,6 +11,14 @@ class JsonRwFilePullBenchmark extends JsonBenchmarkBase {
   JsonRwFilePullBenchmark() : super('json_rw_file_pull');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.read,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.file,
+    impl: BenchmarkImpl.jsonRw,
+  );
+
+  @override
   void setup() {
     _tempDir = Directory.systemTemp.createTempSync('json_rw_bench');
     _filePath = '${_tempDir!.path}/large.json';

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:meta/meta.dart';
 import 'json_token.dart';
 
 extension type const _$State(int _) {
@@ -11,6 +12,11 @@ extension type const _$State(int _) {
 }
 
 /// A state-machine based lexer that processes JSON chunks as bytes.
+///
+/// **EXPERIMENTAL**: This implementation is currently slower than decoding
+/// bytes to strings first (via `utf8.decoder`) and using `ChunkedLexer`,
+/// due to the highly optimized native UTF-8 decoder in the Dart VM.
+@experimental
 final class ByteChunkedLexer {
   _$State _state = _$State.scanning;
   JsonToken? _currentToken;
@@ -26,6 +32,13 @@ final class ByteChunkedLexer {
   // Current chunk state
   List<int> _currentChunk = const [];
   int _index = 0;
+
+  /// Creates a [ByteChunkedLexer] for lexing JSON in chunks.
+  ByteChunkedLexer({List<int>? initialChunk}) {
+    if (initialChunk != null) {
+      addChunk(initialChunk);
+    }
+  }
 
   JsonToken? get currentToken => _currentToken;
   bool get isPartial => _isPartial;
@@ -146,77 +159,73 @@ final class ByteChunkedLexer {
       final c = _currentChunk[_index];
       switch (_state) {
         case _$State.scanning:
-          if (c == 123) {
-            _currentToken = JsonToken.beginObject;
-            _index++;
-            return true;
+          switch (c) {
+            case 123: // '{'
+              _currentToken = JsonToken.beginObject;
+              _index++;
+              return true;
+            case 125: // '}'
+              _currentToken = JsonToken.endObject;
+              _index++;
+              return true;
+            case 91: // '['
+              _currentToken = JsonToken.beginArray;
+              _index++;
+              return true;
+            case 93: // ']'
+              _currentToken = JsonToken.endArray;
+              _index++;
+              return true;
+            case 44: // ','
+              _currentToken = JsonToken.comma;
+              _index++;
+              return true;
+            case 58: // ':'
+              _currentToken = JsonToken.colon;
+              _index++;
+              return true;
+            case 34: // '"'
+              _state = _$State.string;
+              _index++;
+              _bytesBuilder.clear();
+              continue;
+            case 116: // 't'
+              _state = _$State.keyword;
+              _expectedKeyword = 'true';
+              _keywordMatched = 1;
+              _index++;
+              continue;
+            case 102: // 'f'
+              _state = _$State.keyword;
+              _expectedKeyword = 'false';
+              _keywordMatched = 1;
+              _index++;
+              continue;
+            case 110: // 'n'
+              _state = _$State.keyword;
+              _expectedKeyword = 'null';
+              _keywordMatched = 1;
+              _index++;
+              continue;
+            case 45: // '-'
+            case 48:
+            case 49:
+            case 50:
+            case 51:
+            case 52:
+            case 53:
+            case 54:
+            case 55:
+            case 56:
+            case 57: // '0'-'9'
+              _state = _$State.number;
+              _bytesBuilder.clear();
+              continue;
+            default:
+              throw FormatException(
+                'Unexpected character: ${String.fromCharCode(c)}',
+              );
           }
-          if (c == 125) {
-            _currentToken = JsonToken.endObject;
-            _index++;
-            return true;
-          }
-          if (c == 91) {
-            _currentToken = JsonToken.beginArray;
-            _index++;
-            return true;
-          }
-          if (c == 93) {
-            _currentToken = JsonToken.endArray;
-            _index++;
-            return true;
-          }
-          if (c == 44) {
-            _currentToken = JsonToken.comma;
-            _index++;
-            return true;
-          }
-          if (c == 58) {
-            _currentToken = JsonToken.colon;
-            _index++;
-            return true;
-          }
-
-          if (c == 34) {
-            // '"'
-            _state = _$State.string;
-            _index++;
-            _bytesBuilder.clear();
-            continue;
-          }
-          if (c == 116) {
-            // 't'
-            _state = _$State.keyword;
-            _expectedKeyword = 'true';
-            _keywordMatched = 1;
-            _index++;
-            continue;
-          }
-          if (c == 102) {
-            // 'f'
-            _state = _$State.keyword;
-            _expectedKeyword = 'false';
-            _keywordMatched = 1;
-            _index++;
-            continue;
-          }
-          if (c == 110) {
-            // 'n'
-            _state = _$State.keyword;
-            _expectedKeyword = 'null';
-            _keywordMatched = 1;
-            _index++;
-            continue;
-          }
-          if ((c >= 48 && c <= 57) || c == 45) {
-            // 0-9, -
-            _state = _$State.number;
-            _bytesBuilder.clear();
-            continue;
-          }
-          throw FormatException(
-            'Unexpected character: ${String.fromCharCode(c)}',
-          );
 
         case _$State.string:
           if (_scanString()) {
@@ -262,7 +271,7 @@ final class ByteChunkedLexer {
           final chunk = _currentChunk;
           while (_index < chunk.length) {
             final c = chunk[_index];
-            if ((c >= 48 && c <= 57) ||
+            if (((c ^ 0x30) <= 9) ||
                 c == 45 ||
                 c == 46 ||
                 c == 101 ||

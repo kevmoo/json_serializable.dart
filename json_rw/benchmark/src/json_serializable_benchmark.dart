@@ -5,6 +5,14 @@ class JsonSerializableBenchmark extends JsonBenchmarkBase {
   const JsonSerializableBenchmark() : super('json_serializable');
 
   @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.write,
+    size: BenchmarkSize.large,
+    format: BenchmarkFormat.string,
+    impl: BenchmarkImpl.jsonSerializable,
+  );
+
+  @override
   void runImpl() {
     final map = largeObject.toJson();
     final s = json.encode(map);
@@ -14,6 +22,14 @@ class JsonSerializableBenchmark extends JsonBenchmarkBase {
 
 class JsonSerializableSmallBenchmark extends JsonBenchmarkBase {
   const JsonSerializableSmallBenchmark() : super('json_serializable_small');
+
+  @override
+  BenchmarkMetadata get metadata => (
+    op: BenchmarkOp.write,
+    size: BenchmarkSize.small,
+    format: BenchmarkFormat.string,
+    impl: BenchmarkImpl.jsonSerializable,
+  );
 
   @override
   void runImpl() {

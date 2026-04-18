@@ -87,6 +87,7 @@ class ChunkedJsonReader implements JsonReader {
     _hasToken = false;
   }
 
+  @pragma('vm:prefer-inline')
   bool _ensureToken() {
     if (_hasToken) return true;
     while (!_lexer.nextToken()) {
@@ -119,6 +120,7 @@ class ChunkedJsonReader implements JsonReader {
   }
 
   @override
+  @pragma('vm:prefer-inline')
   JsonToken peek() {
     if (!_ensureToken()) {
       if (_lexer.isPartial) {

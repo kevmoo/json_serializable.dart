@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'json_token.dart';
 
 extension type const _$State(int _) {
@@ -8,8 +9,25 @@ extension type const _$State(int _) {
   static const escape = _$State(4);
 }
 
+extension type const _$Action(int _) {
+  static const whitespace = _$Action(1);
+  static const beginObject = _$Action(2);
+  static const endObject = _$Action(3);
+  static const beginArray = _$Action(4);
+  static const endArray = _$Action(5);
+  static const comma = _$Action(6);
+  static const colon = _$Action(7);
+  static const string = _$Action(8);
+  static const keywordTrue = _$Action(9);
+  static const keywordFalse = _$Action(10);
+  static const keywordNull = _$Action(11);
+  static const number = _$Action(12);
+}
+
 /// A state-machine based lexer that processes JSON chunks.
 final class ChunkedLexer {
+  static final Uint8List _actions = _createActions();
+
   _$State _state = _$State.scanning;
   JsonToken? _currentToken;
   bool _isPartial = false;
@@ -35,49 +53,37 @@ final class ChunkedLexer {
     _index = 0;
   }
 
-  void _skipWhitespace() {
-    while (_index < _currentChunk.length) {
-      final c = _currentChunk.codeUnitAt(_index);
-      if (c == 32 || c == 10 || c == 13 || c == 9) {
-        _index++;
-      } else {
-        break;
-      }
-    }
-  }
-
   bool _scanString() {
     final start = _index;
     while (_index < _currentChunk.length) {
       final c = _currentChunk.codeUnitAt(_index);
-      if (c < 32) {
-        throw FormatException('Control character in string: $c');
-      }
-      if (c == 34) {
-        // '"'
-        _stringBuffer.write(_currentChunk.substring(start, _index));
-        _index++; // consume '"'
-        _isPartial = false;
-        _state = _$State.scanning;
-        return true;
-      }
-      if (c == 92) {
-        // '\\'
-        _stringBuffer.write(_currentChunk.substring(start, _index));
-        _index++; // skip '\\'
-        if (_index >= _currentChunk.length) {
-          _state = _$State.escape;
-          _isPartial = true;
+      switch (c) {
+        case 34: // '"'
+          _stringBuffer.write(_currentChunk.substring(start, _index));
+          _index++; // consume '"'
+          _isPartial = false;
+          _state = _$State.scanning;
           return true;
-        }
-        // Handle escape in chunk
-        final esc = _currentChunk.codeUnitAt(_index);
-        _decodeEscape(esc);
-        _index++;
-        // Continue scanning after escape
-        return _scanString();
+        case 92: // '\\'
+          _stringBuffer.write(_currentChunk.substring(start, _index));
+          _index++; // skip '\\'
+          if (_index >= _currentChunk.length) {
+            _state = _$State.escape;
+            _isPartial = true;
+            return true;
+          }
+          // Handle escape in chunk
+          final esc = _currentChunk.codeUnitAt(_index);
+          _decodeEscape(esc);
+          _index++;
+          // Continue scanning after escape
+          return _scanString();
+        default:
+          if (c < 32) {
+            throw FormatException('Control character in string: $c');
+          }
+          _index++;
       }
-      _index++;
     }
     _stringBuffer.write(_currentChunk.substring(start, _index));
     _isPartial = true;
@@ -119,85 +125,72 @@ final class ChunkedLexer {
 
   bool nextToken() {
     while (true) {
-      if (_state == _$State.scanning) {
-        _skipWhitespace();
-      }
       if (_index >= _currentChunk.length) return false;
 
       final c = _currentChunk.codeUnitAt(_index);
       switch (_state) {
         case _$State.scanning:
-          if (c == 123) {
-            _currentToken = JsonToken.beginObject;
-            _index++;
-            return true;
+          final action = c < 128 ? _actions[c] : 0;
+          switch (_$Action(action)) {
+            case _$Action.whitespace:
+              _index++;
+              continue;
+            case _$Action.beginObject:
+              _currentToken = JsonToken.beginObject;
+              _index++;
+              return true;
+            case _$Action.endObject:
+              _currentToken = JsonToken.endObject;
+              _index++;
+              return true;
+            case _$Action.beginArray:
+              _currentToken = JsonToken.beginArray;
+              _index++;
+              return true;
+            case _$Action.endArray:
+              _currentToken = JsonToken.endArray;
+              _index++;
+              return true;
+            case _$Action.comma:
+              _currentToken = JsonToken.comma;
+              _index++;
+              return true;
+            case _$Action.colon:
+              _currentToken = JsonToken.colon;
+              _index++;
+              return true;
+            case _$Action.string:
+              _state = _$State.string;
+              _index++;
+              _stringBuffer.clear();
+              continue;
+            case _$Action.keywordTrue:
+              _state = _$State.keyword;
+              _expectedKeyword = 'true';
+              _keywordMatched = 1;
+              _index++;
+              continue;
+            case _$Action.keywordFalse:
+              _state = _$State.keyword;
+              _expectedKeyword = 'false';
+              _keywordMatched = 1;
+              _index++;
+              continue;
+            case _$Action.keywordNull:
+              _state = _$State.keyword;
+              _expectedKeyword = 'null';
+              _keywordMatched = 1;
+              _index++;
+              continue;
+            case _$Action.number:
+              _state = _$State.number;
+              _stringBuffer.clear();
+              continue;
+            default:
+              throw FormatException(
+                'Unexpected character: ${String.fromCharCode(c)}',
+              );
           }
-          if (c == 125) {
-            _currentToken = JsonToken.endObject;
-            _index++;
-            return true;
-          }
-          if (c == 91) {
-            _currentToken = JsonToken.beginArray;
-            _index++;
-            return true;
-          }
-          if (c == 93) {
-            _currentToken = JsonToken.endArray;
-            _index++;
-            return true;
-          }
-          if (c == 44) {
-            _currentToken = JsonToken.comma;
-            _index++;
-            return true;
-          }
-          if (c == 58) {
-            _currentToken = JsonToken.colon;
-            _index++;
-            return true;
-          }
-
-          if (c == 34) {
-            // '"'
-            _state = _$State.string;
-            _index++;
-            _stringBuffer.clear();
-            continue;
-          }
-          if (c == 116) {
-            // 't'
-            _state = _$State.keyword;
-            _expectedKeyword = 'true';
-            _keywordMatched = 1;
-            _index++;
-            continue;
-          }
-          if (c == 102) {
-            // 'f'
-            _state = _$State.keyword;
-            _expectedKeyword = 'false';
-            _keywordMatched = 1;
-            _index++;
-            continue;
-          }
-          if (c == 110) {
-            // 'n'
-            _state = _$State.keyword;
-            _expectedKeyword = 'null';
-            _keywordMatched = 1;
-            _index++;
-            continue;
-          }
-          if ((c >= 48 && c <= 57) || c == 45) {
-            // 0-9, -
-            _state = _$State.number;
-            _stringBuffer.clear();
-            continue;
-          }
-          throw FormatException(
-            'Unexpected character: ${String.fromCharCode(c)}',
-          );
 
         case _$State.string:
           if (_scanString()) {
@@ -284,4 +277,27 @@ final class ChunkedLexer {
       }
     }
   }
+}
+
+Uint8List _createActions() {
+  final table = Uint8List(128);
+  table[32] = _$Action.whitespace as int; // Space
+  table[10] = _$Action.whitespace as int; // LF
+  table[13] = _$Action.whitespace as int; // CR
+  table[9] = _$Action.whitespace as int;  // Tab
+  table[123] = _$Action.beginObject as int;
+  table[125] = _$Action.endObject as int;
+  table[91] = _$Action.beginArray as int;
+  table[93] = _$Action.endArray as int;
+  table[44] = _$Action.comma as int;
+  table[58] = _$Action.colon as int;
+  table[34] = _$Action.string as int;
+  table[116] = _$Action.keywordTrue as int;
+  table[102] = _$Action.keywordFalse as int;
+  table[110] = _$Action.keywordNull as int;
+  table[45] = _$Action.number as int; // '-'
+  for (var i = 48; i <= 57; i++) {
+    table[i] = _$Action.number as int; // '0'-'9'
+  }
+  return table;
 }

@@ -3,11 +3,13 @@ import 'package:json_rw/json_rw.dart';
 import '../../test/integration/complex_object.dart';
 import 'shared.dart';
 
-class JsonRwByteFilePushBenchmark extends AsyncJsonBenchmarkBase {
+class JsonRwFileByteJsonReaderConverterBenchmark
+    extends AsyncJsonBenchmarkBase {
   Directory? _tempDir;
   String? _filePath;
 
-  JsonRwByteFilePushBenchmark() : super('json_rw_byte_file_push');
+  JsonRwFileByteJsonReaderConverterBenchmark()
+    : super('json_rw_file_byte_json_reader_converter');
 
   @override
   BenchmarkMetadata get metadata => (
@@ -15,6 +17,7 @@ class JsonRwByteFilePushBenchmark extends AsyncJsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.file,
     impl: BenchmarkImpl.jsonRw,
+    variant: 'ByteJsonReaderConverter',
   );
 
   @override

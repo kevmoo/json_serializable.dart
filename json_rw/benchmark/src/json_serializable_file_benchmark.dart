@@ -15,6 +15,7 @@ class JsonSerializableFileBenchmark extends AsyncJsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.file,
     impl: BenchmarkImpl.jsonSerializable,
+    variant: null,
   );
 
   @override

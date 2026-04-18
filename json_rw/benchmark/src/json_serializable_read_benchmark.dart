@@ -11,6 +11,7 @@ class JsonSerializableReadBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.string,
     impl: BenchmarkImpl.jsonSerializable,
+    variant: null,
   );
 
   @override
@@ -30,6 +31,7 @@ class JsonSerializableReadSmallBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.small,
     format: BenchmarkFormat.string,
     impl: BenchmarkImpl.jsonSerializable,
+    variant: null,
   );
 
   @override

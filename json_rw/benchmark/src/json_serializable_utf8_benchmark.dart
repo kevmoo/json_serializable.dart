@@ -10,6 +10,7 @@ class JsonSerializableUtf8Benchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.utf8,
     impl: BenchmarkImpl.jsonSerializable,
+    variant: null,
   );
 
   @override
@@ -31,6 +32,7 @@ class JsonSerializableUtf8SmallBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.small,
     format: BenchmarkFormat.utf8,
     impl: BenchmarkImpl.jsonSerializable,
+    variant: null,
   );
 
   @override

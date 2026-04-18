@@ -18,11 +18,11 @@ import 'shared.dart';
 final Set<DescribedBenchmark> benchmarks = {
   const JsonRwBenchmark(),
   const JsonRwSmallBenchmark(),
-  JsonRwByteFilePushBenchmark(), // Not const
+  JsonRwFileByteJsonReaderConverterBenchmark(),
   const JsonRwChunkedReadBenchmark(),
   const JsonRwChunkedReadSmallBenchmark(),
-  JsonRwFilePullBenchmark(), // Not const
-  JsonRwFilePushBenchmark(), // Not const
+  JsonRwFileChunkedJsonReaderBenchmark(),
+  JsonRwFileJsonReaderConverterBenchmark(),
   const JsonRwReadBenchmark(),
   const JsonRwReadSmallBenchmark(),
   const JsonRwUtf8Benchmark(),

@@ -4,11 +4,12 @@ import 'package:json_rw/json_rw.dart';
 import '../../test/integration/complex_object.dart';
 import 'shared.dart';
 
-class JsonRwFilePullBenchmark extends JsonBenchmarkBase {
+class JsonRwFileChunkedJsonReaderBenchmark extends JsonBenchmarkBase {
   Directory? _tempDir;
   String? _filePath;
 
-  JsonRwFilePullBenchmark() : super('json_rw_file_pull');
+  JsonRwFileChunkedJsonReaderBenchmark()
+    : super('json_rw_file_chunked_json_reader');
 
   @override
   BenchmarkMetadata get metadata => (
@@ -16,6 +17,7 @@ class JsonRwFilePullBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.file,
     impl: BenchmarkImpl.jsonRw,
+    variant: 'ChunkedJsonReader',
   );
 
   @override

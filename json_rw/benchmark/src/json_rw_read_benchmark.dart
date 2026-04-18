@@ -11,6 +11,7 @@ class JsonRwReadBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.string,
     impl: BenchmarkImpl.jsonRw,
+    variant: null,
   );
 
   @override
@@ -29,6 +30,7 @@ class JsonRwReadSmallBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.small,
     format: BenchmarkFormat.string,
     impl: BenchmarkImpl.jsonRw,
+    variant: null,
   );
 
   @override

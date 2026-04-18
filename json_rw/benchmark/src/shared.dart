@@ -39,6 +39,7 @@ typedef BenchmarkMetadata = ({
   BenchmarkSize size,
   BenchmarkFormat format,
   BenchmarkImpl impl,
+  String? variant,
 });
 
 abstract interface class DescribedBenchmark {

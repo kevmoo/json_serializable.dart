@@ -11,6 +11,7 @@ class JsonRwChunkedReadBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.chunked,
     impl: BenchmarkImpl.jsonRw,
+    variant: null,
   );
 
   @override
@@ -49,6 +50,7 @@ class JsonRwChunkedReadSmallBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.small,
     format: BenchmarkFormat.chunked,
     impl: BenchmarkImpl.jsonRw,
+    variant: null,
   );
 
   @override

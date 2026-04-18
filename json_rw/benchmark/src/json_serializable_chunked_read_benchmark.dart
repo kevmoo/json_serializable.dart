@@ -12,6 +12,7 @@ class JsonSerializableChunkedReadBenchmark extends JsonBenchmarkBase {
     size: BenchmarkSize.large,
     format: BenchmarkFormat.chunked,
     impl: BenchmarkImpl.jsonSerializable,
+    variant: null,
   );
 
   @override

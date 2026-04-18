@@ -7,12 +7,22 @@ class Utf8JsonWriter implements JsonWriter {
   final Sink<List<int>> _sink;
   final List<_JsonScope> _stack = [];
   bool _hasValue = false;
+  final Uint8List? _indentBytes;
+  int _indentLevel = 0;
 
   static const int _defaultBufferSize = 1024;
   Uint8List _buffer = Uint8List(_defaultBufferSize);
   int _index = 0;
 
-  Utf8JsonWriter(this._sink);
+  Utf8JsonWriter(this._sink, {IndentType? indentType, int? indentCount})
+    : _indentBytes = _getIndentBytes(indentType, indentCount);
+
+  static Uint8List? _getIndentBytes(IndentType? type, int? count) {
+    if (type == null) return null;
+    final n = count ?? (type == IndentType.spaces ? 2 : 1);
+    final s = (type == IndentType.spaces ? ' ' : '\t') * n;
+    return Uint8List.fromList(s.codeUnits);
+  }
 
   void _writeByte(int byte) {
     if (_index == _buffer.length) {
@@ -31,6 +41,16 @@ class Utf8JsonWriter implements JsonWriter {
     }
   }
 
+  void _indent() {
+    if (_indentBytes == null) return;
+    _writeByte(10); // '\n'
+    for (var i = 0; i < _indentLevel; i++) {
+      for (var j = 0; j < _indentBytes.length; j++) {
+        _writeByte(_indentBytes[j]);
+      }
+    }
+  }
+
   void _beforeValue() {
     if (_stack.isEmpty) return;
     final top = _stack.last;
@@ -38,6 +58,7 @@ class Utf8JsonWriter implements JsonWriter {
       if (_hasValue) {
         _writeByte(44); // ','
       }
+      _indent();
       _hasValue = true;
     }
   }
@@ -46,6 +67,7 @@ class Utf8JsonWriter implements JsonWriter {
     if (_hasValue) {
       _writeByte(44); // ','
     }
+    _indent();
     _hasValue = true;
   }
 
@@ -55,11 +77,16 @@ class Utf8JsonWriter implements JsonWriter {
     _writeByte(123); // '{'
     _stack.add(_JsonScope.object);
     _hasValue = false;
+    _indentLevel++;
   }
 
   @override
   void endObject() {
     _stack.removeLast();
+    _indentLevel--;
+    if (_hasValue && _indentBytes != null) {
+      _indent();
+    }
     _writeByte(125); // '}'
     _hasValue = true;
     if (_stack.isEmpty) {
@@ -73,11 +100,16 @@ class Utf8JsonWriter implements JsonWriter {
     _writeByte(91); // '['
     _stack.add(_JsonScope.array);
     _hasValue = false;
+    _indentLevel++;
   }
 
   @override
   void endArray() {
     _stack.removeLast();
+    _indentLevel--;
+    if (_hasValue && _indentBytes != null) {
+      _indent();
+    }
     _writeByte(93); // ']'
     _hasValue = true;
     if (_stack.isEmpty) {
@@ -90,6 +122,9 @@ class Utf8JsonWriter implements JsonWriter {
     _beforeName();
     _writeStringValue(name);
     _writeByte(58); // ':'
+    if (_indentBytes != null) {
+      _writeByte(32); // ' '
+    }
   }
 
   @override

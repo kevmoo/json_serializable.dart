@@ -284,7 +284,7 @@ Uint8List _createActions() {
   table[32] = _$Action.whitespace as int; // Space
   table[10] = _$Action.whitespace as int; // LF
   table[13] = _$Action.whitespace as int; // CR
-  table[9] = _$Action.whitespace as int;  // Tab
+  table[9] = _$Action.whitespace as int; // Tab
   table[123] = _$Action.beginObject as int;
   table[125] = _$Action.endObject as int;
   table[91] = _$Action.beginArray as int;

@@ -33,7 +33,7 @@ class JsonWriterConverter<T> extends Converter<T, String> {
   @override
   Converter<T, R> fuse<R>(Converter<String, R> other) {
     if (other is Utf8Encoder) {
-      return _FusedBytesConverter<T>(_write, _indentType) as Converter<T, R>;
+      return NewJsonUtf8Converter<T>(_write, _indentType) as Converter<T, R>;
     }
     return super.fuse(other);
   }
@@ -65,11 +65,11 @@ class _JsonWriterSink<T> implements ChunkedConversionSink<T> {
   }
 }
 
-class _FusedBytesConverter<T> extends Converter<T, List<int>> {
+class NewJsonUtf8Converter<T> extends Converter<T, List<int>> {
   final void Function(T object, JsonWriter writer) _write;
   final IndentType? _indentType;
 
-  _FusedBytesConverter(this._write, this._indentType);
+  NewJsonUtf8Converter(this._write, [this._indentType]);
 
   @override
   List<int> convert(T input) {

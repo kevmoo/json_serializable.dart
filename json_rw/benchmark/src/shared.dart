@@ -26,6 +26,22 @@ final smallObject = ComplexObject(
 final smallJsonString = json.encode(smallObject.toJson());
 final smallJsonBytes = utf8.encode(smallJsonString);
 
+// Create a large object of arbitrary size
+ComplexObject createLargeObject(int size) => ComplexObject(
+  name: 'Complex Object',
+  age: 42,
+  objects: List.generate(size, SimpleObject.new),
+  map: {for (var i = 0; i < 100; i++) 'key$i': 'value$i'},
+);
+
+const benchmarkSize = 10000;
+
+/// Shared stream generator to ensure consistent input.
+///
+/// Note: Returns JUST ONE large object so that comparisons are fair.
+Stream<ComplexObject> getComplexObjectStream() =>
+    Stream.fromIterable([createLargeObject(benchmarkSize)]);
+
 enum BenchmarkOp { read, write }
 
 enum BenchmarkSize { small, large }

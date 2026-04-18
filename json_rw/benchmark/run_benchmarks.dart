@@ -88,8 +88,8 @@ void main(List<String> arguments) async {
   print('''
 \n
 --- A/B Comparison Matrix ---
-| Mode | Size | Format | `json_serializable` | `json_rw` | Winner (% faster) |
-| :--- | :--- | :--- | :--- | :--- | :--- |''');
+| Mode | Size | Format | Old | New | Winner (% faster) |
+| :--- | :--- | :--- | ---: | ---: | :--- |''');
 
   void compare(
     String mode,
@@ -109,52 +109,79 @@ void main(List<String> arguments) async {
     final baseMedian = baseValues[baseValues.length ~/ 2];
     final rwMedian = rwValues[rwValues.length ~/ 2];
 
-    String winner;
-    double percent;
+    String winnerStr;
     if (baseMedian < rwMedian) {
-      winner = '`json_serializable`';
-      percent = (rwMedian / baseMedian - 1) * 100;
+      final ratio = rwMedian / baseMedian;
+      if (ratio >= 2.0) {
+        winnerStr = '🐢 Old (**${ratio.toStringAsFixed(1)}x** faster)';
+      } else {
+        final percent = ((rwMedian - baseMedian) / baseMedian * 100)
+            .toStringAsFixed(1);
+        winnerStr = '🐢 Old ($percent% faster)';
+      }
     } else {
-      winner = '`json_rw`';
-      percent = (baseMedian / rwMedian - 1) * 100;
+      final ratio = baseMedian / rwMedian;
+      if (ratio >= 2.0) {
+        winnerStr = '🏆 New (**${ratio.toStringAsFixed(1)}x** faster)';
+      } else {
+        final percent = ((baseMedian - rwMedian) / rwMedian * 100)
+            .toStringAsFixed(1);
+        winnerStr = '🏆 New ($percent% faster)';
+      }
     }
 
-    final baseStr = baseMedian.toStringAsFixed(2);
-    final rwStr = rwMedian.toStringAsFixed(2);
-    final percentStr = percent.toStringAsFixed(1);
-    final line =
-        '| $mode | $size | $format | $baseStr µs | $rwStr µs | '
-        '$winner ($percentStr% faster) |';
+    final baseStr = baseMedian < rwMedian
+        ? '**${baseMedian.toStringAsFixed(2)} µs**'
+        : '${baseMedian.toStringAsFixed(2)} µs';
+    final rwStr = rwMedian < baseMedian
+        ? '**${rwMedian.toStringAsFixed(2)} µs**'
+        : '${rwMedian.toStringAsFixed(2)} µs';
+
+    final line = '| $mode | $size | $format | $baseStr | $rwStr | $winnerStr |';
     print(line);
   }
 
-  // Find all pairs to compare
-  final baseBenchmarks =
-      benchmarks
-          .where((b) => b.metadata.impl == BenchmarkImpl.jsonSerializable)
-          .toList()
-        // Sort them to ensure consistent output order
-        ..sort((a, b) => a.name.compareTo(b.name));
+  // Find all json_rw benchmarks and pair them with the corresponding
+  // json_serializable baseline
+  final rwBenchmarks =
+      benchmarks.where((b) => b.metadata.impl == BenchmarkImpl.jsonRw).toList()
+        ..sort((a, b) {
+          // Sort by op (write first), then size (large first), then format
+          // (string first)
+          final opCompare = b.metadata.op.index.compareTo(a.metadata.op.index);
+          if (opCompare != 0) return opCompare;
 
-  for (final base in baseBenchmarks) {
-    DescribedBenchmark? match;
+          final sizeCompare = b.metadata.size.index.compareTo(
+            a.metadata.size.index,
+          );
+          if (sizeCompare != 0) return sizeCompare;
+
+          return a.metadata.format.index.compareTo(b.metadata.format.index);
+        });
+
+  for (final rw in rwBenchmarks) {
+    DescribedBenchmark? baseMatch;
     for (final b in benchmarks) {
-      if (b.metadata.impl == BenchmarkImpl.jsonRw &&
-          b.metadata.op == base.metadata.op &&
-          b.metadata.size == base.metadata.size &&
-          b.metadata.format == base.metadata.format) {
-        match = b;
+      if (b.metadata.impl == BenchmarkImpl.jsonSerializable &&
+          b.metadata.op == rw.metadata.op &&
+          b.metadata.size == rw.metadata.size &&
+          b.metadata.format == rw.metadata.format) {
+        baseMatch = b;
         break;
       }
     }
 
-    if (match != null) {
+    if (baseMatch != null) {
+      final formatStr = rw.metadata.variant != null
+          ? '${_capitalize(rw.metadata.format.name)} (${rw.metadata.variant})'
+          : _capitalize(rw.metadata.format.name);
+
       compare(
-        _capitalize(base.metadata.op.name),
-        _capitalize(base.metadata.size.name),
-        _capitalize(base.metadata.format.name),
-        base.name,
-        match.name,
+        _capitalize(rw.metadata.op.name),
+        _capitalize(rw.metadata.size.name),
+        formatStr,
+        baseMatch.name,
+        rw.name,
       );
     }
   }

@@ -12,7 +12,7 @@ We want to support populating a custom class (e.g., `CustomClass`) from the foll
 | **String** | Supported (via `JsonReader`) | Supported (via Builder) | Done |
 | **Stream<String>** | Supported (via `ChunkedJsonReader`) | Supported (via `JsonBuilderTransformer`) | Done |
 | **List<int> (Bytes)** | Supported (via `Utf8JsonReader`) | Supported (via Builder) | Done |
-| **Stream<List<int>>** | Supported (via Stream pipe) | Supported (via Stream pipe) | Proposed |
+| **Stream<List<int>>** | Supported (via Stream pipe) | Supported (via Stream pipe) | Done |
 
 ### Writing (Serialization)
 We want to support writing a custom class to the following targets:
@@ -22,11 +22,11 @@ We want to support writing a custom class to the following targets:
 | **String** | Supported (`StringJsonWriter`) | Supported (`PrettyStringJsonWriter`) | Done |
 | **Stream<String>** | Supported (via Sink) | Supported (via Sink) | Done |
 | **List<int> (Bytes)** | Supported (`BytesJsonWriter`) | Supported (`BytesJsonWriter`) | Done |
-| **Stream<List<int>>** | Supported (via Stream pipe) | Supported (via Stream pipe) | Proposed |
+| **Stream<List<int>>** | Supported (via Stream pipe) | Supported (via Stream pipe) | Done |
 
-## Proposed Solution: The Converter Model
+## The Converter Model
 
-To fill the gaps for `List<int>` and `Stream<List<int>>`, we propose adopting the `Converter` model from `dart:convert`.
+To fill the gaps for `List<int>` and `Stream<List<int>>`, we adopted the `Converter` model from `dart:convert`.
 
 ### For Reading:
 Create `JsonReaderConverter<T>` implementing `Converter<String, T>`.

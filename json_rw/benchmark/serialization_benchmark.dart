@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'src/all_benchmarks.dart';
+import 'src/shared.dart';
 
 Future<void> main(List<String> arguments) async {
   final runAll = arguments.isEmpty || arguments.contains('all');
@@ -14,15 +15,24 @@ Future<void> main(List<String> arguments) async {
     await iterator!.moveNext();
   }
 
-  var executed = 0;
+  final results = <DescribedBenchmark, double>{};
+
   for (final benchmark in benchmarks) {
     if (runAll || arguments.contains(benchmark.name)) {
-      await benchmark.report();
-      executed++;
+      double time;
+      if (benchmark is AsyncJsonBenchmarkBase) {
+        time = await benchmark.measure();
+      } else if (benchmark is JsonBenchmarkBase) {
+        time = benchmark.measure();
+      } else {
+        continue;
+      }
+      results[benchmark] = time;
+      print('${benchmark.name}(RunTime): $time us.');
     }
   }
 
-  if (executed == 0) {
+  if (results.isEmpty) {
     print('No benchmarks matched the arguments: $arguments');
     print('Available benchmarks: ${benchmarks.map((b) => b.name).join(', ')}');
   }

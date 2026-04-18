@@ -55,6 +55,27 @@ if (chunk is Uint8List) {
 }
 ```
 
+### Lexer Character Classification (Switch vs Lookup Table)
+When building state-machine based lexers, classifying the current character is often the hottest path.
+
+- **Direct `switch`**: Fast and readable. The JIT compiler is very good at optimizing sparse switches on character codes.
+- **Lookup Table**: Pre-populating a mapping array (e.g., `Uint8List(128)`) and switching on the action code instead. This performs better in **AOT mode**, as it avoids sparse switch overhead.
+
+**Pattern**:
+```dart
+// At initialization (or top-level)
+final table = Uint8List(128);
+table[34] = _actionString;
+// ...
+
+// In the hot loop
+final action = c < 128 ? _actions[c] : 0;
+switch (action) {
+  case _actionString:
+    // ...
+}
+```
+
 ### Timeline Events
 While CPU sampling provides a statistical view of hot spots, `dart:developer`'s `Timeline` allows you to inject explicit, high-fidelity events into the timeline. These are visible in Dart DevTools.
 
@@ -81,7 +102,10 @@ To understand the memory benefits of streaming JSON (avoiding intermediate maps 
 This confirms that the streaming approach successfully avoids intermediate map allocations and significantly reduces list allocations!
 
 ## Constraints
-- **AOT vs JIT**: Profiling AOT-compiled code yields different results than JIT code. Ensure you profile the mode that matches production if possible.
+- **AOT vs JIT Optimization Differences**: The JIT compiler and AOT compiler can optimize hot paths differently. For example, in character classification loops:
+    - The **JIT compiler** favored a sparse `switch` statement directly on character codes over an array lookup.
+    - The **AOT compiler** favored an array lookup (`_actions[c]`) followed by a dense `switch` on mapped action codes, yielding a ~6% improvement.
+  *Action*: Always benchmark in the target mode (usually AOT for production apps and CLI tools) to make final optimization decisions.
 - **Wall Time vs CPU Time**: The VM profiler measures CPU samples, not wall time. Blocking I/O operations might not show up as hot spots in CPU profiles.
 
 ## Strategies for Discovery

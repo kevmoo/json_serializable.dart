@@ -103,39 +103,36 @@ void main(List<String> arguments) async {
 
     if (baseValues == null || rwValues == null) return;
 
-    baseValues.sort();
-    rwValues.sort();
-
-    final baseMedian = baseValues[baseValues.length ~/ 2];
-    final rwMedian = rwValues[rwValues.length ~/ 2];
+    final baseFastest = baseValues.first;
+    final rwFastest = rwValues.first;
 
     String winnerStr;
-    if (baseMedian < rwMedian) {
-      final ratio = rwMedian / baseMedian;
+    if (baseFastest < rwFastest) {
+      final ratio = rwFastest / baseFastest;
       if (ratio >= 2.0) {
         winnerStr = '🐢 Old (**${ratio.toStringAsFixed(1)}x** faster)';
       } else {
-        final percent = ((rwMedian - baseMedian) / baseMedian * 100)
+        final percent = ((rwFastest - baseFastest) / baseFastest * 100)
             .toStringAsFixed(1);
         winnerStr = '🐢 Old ($percent% faster)';
       }
     } else {
-      final ratio = baseMedian / rwMedian;
+      final ratio = baseFastest / rwFastest;
       if (ratio >= 2.0) {
         winnerStr = '🏆 New (**${ratio.toStringAsFixed(1)}x** faster)';
       } else {
-        final percent = ((baseMedian - rwMedian) / rwMedian * 100)
+        final percent = ((baseFastest - rwFastest) / rwFastest * 100)
             .toStringAsFixed(1);
         winnerStr = '🏆 New ($percent% faster)';
       }
     }
 
-    final baseStr = baseMedian < rwMedian
-        ? '**${baseMedian.toStringAsFixed(2)} µs**'
-        : '${baseMedian.toStringAsFixed(2)} µs';
-    final rwStr = rwMedian < baseMedian
-        ? '**${rwMedian.toStringAsFixed(2)} µs**'
-        : '${rwMedian.toStringAsFixed(2)} µs';
+    final baseStr = baseFastest < rwFastest
+        ? '**${baseFastest.toStringAsFixed(2)} µs**'
+        : '${baseFastest.toStringAsFixed(2)} µs';
+    final rwStr = rwFastest < baseFastest
+        ? '**${rwFastest.toStringAsFixed(2)} µs**'
+        : '${rwFastest.toStringAsFixed(2)} µs';
 
     final line = '| $mode | $size | $format | $baseStr | $rwStr | $winnerStr |';
     print(line);

@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart';
 import 'package:source_helper/source_helper.dart';
 
 import '../lambda_result.dart';
@@ -23,7 +24,9 @@ class GenericFactoryHelper extends TypeHelper<TypeHelperContextWithConfig> {
       final toJsonFunc = toJsonForType(targetType);
       if (targetType.isNullableType) {
         context.addMember(_toJsonHelper);
-        return '$_toJsonHelperName($expression, $toJsonFunc)';
+        return refer(
+          _toJsonHelperName,
+        ).call([CodeExpression(Code(expression)), refer(toJsonFunc)]);
       }
 
       return LambdaResult(expression, toJsonFunc);
@@ -45,7 +48,9 @@ class GenericFactoryHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
       if (targetType.isNullableType) {
         context.addMember(_fromJsonHelper);
-        return '$_fromJsonHelperName($expression, $fromJsonFunc)';
+        return refer(
+          _fromJsonHelperName,
+        ).call([CodeExpression(Code(expression)), refer(fromJsonFunc)]);
       }
 
       return LambdaResult(expression, fromJsonFunc);

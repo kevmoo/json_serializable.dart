@@ -10,6 +10,7 @@ import '../constants.dart';
 import '../lambda_result.dart';
 import '../shared_checkers.dart';
 import '../type_helper.dart';
+import '../utils.dart';
 
 class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const IterableHelper();
@@ -31,13 +32,14 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     var isList = _coreListChecker.isAssignableFromType(targetType);
     final subField = context.serialize(itemType, closureArg)!;
+    final subFieldStr = toCodeString(subField);
 
     var optionalQuestion = targetType.isNullableType ? '?' : '';
 
     // In the case of trivial JSON types (int, String, etc), `subField`
     // will be identical to `substitute` – so no explicit mapping is needed.
     // If they are not equal, then we to write out the substitution.
-    if (subField != closureArg) {
+    if (subFieldStr != closureArg) {
       final lambda = LambdaResult.process(subField);
 
       expression = '$expression$optionalQuestion.map($lambda)';
@@ -74,6 +76,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final iterableGenericType = coreIterableGenericType(targetType);
 
     final itemSubVal = context.deserialize(iterableGenericType, closureArg)!;
+    final itemSubValStr = toCodeString(itemSubVal);
 
     var output = '$expression as List<dynamic>';
 
@@ -85,7 +88,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     // If `itemSubVal` is the same and it's not a Set, then we don't need to do
     // anything fancy
-    if (closureArg == itemSubVal &&
+    if (closureArg == itemSubValStr &&
         !_coreSetChecker.isExactlyType(targetType)) {
       return output;
     }
@@ -94,7 +97,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     var optionalQuestion = targetTypeIsNullable ? '?' : '';
 
-    if (closureArg != itemSubVal) {
+    if (closureArg != itemSubValStr) {
       final lambda = LambdaResult.process(itemSubVal);
       output += '$optionalQuestion.map($lambda)';
       // No need to include the optional question below – it was used here!

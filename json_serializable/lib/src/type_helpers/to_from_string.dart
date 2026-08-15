@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart';
 import 'package:source_gen/source_gen.dart';
 
 import '../default_container.dart';
@@ -68,9 +69,13 @@ class ToFromStringHelper {
       return null;
     }
 
-    final parseParam = isString ? expression : '$expression as String';
+    // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
+    // for unparenthesized argument cast in parse calls.
+    final parseParam = isString
+        ? CodeExpression(Code(expression))
+        : CodeExpression(Code('$expression as String'));
 
-    final output = '$_parse($parseParam)';
+    final output = refer(_parse).call([parseParam]);
 
     return DefaultContainer(expression, output);
   }

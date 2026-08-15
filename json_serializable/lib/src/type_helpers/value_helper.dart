@@ -29,7 +29,7 @@ class ValueHelper extends TypeHelper {
   }
 
   @override
-  String? deserialize(
+  Object? deserialize(
     DartType targetType,
     String expression,
     TypeHelperContext context,

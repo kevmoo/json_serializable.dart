@@ -23,15 +23,17 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
     var index = 1;
     for (var field in targetType.positionalFields) {
       final indexer = escapeDartString('\$$index');
-      items.add(context.deserialize(field.type, '$paramName[$indexer]')!);
+      items.add(
+        toCodeString(context.deserialize(field.type, '$paramName[$indexer]')),
+      );
       index++;
     }
     for (var field in targetType.namedFields) {
       final indexer = escapeDartString(field.name);
-      items.add(
-        '${field.name}:'
-        '${context.deserialize(field.type, '$paramName[$indexer]')!}',
+      final val = toCodeString(
+        context.deserialize(field.type, '$paramName[$indexer]'),
       );
+      items.add('${field.name}: $val');
     }
 
     if (items.isEmpty) {
@@ -74,18 +76,17 @@ $helperName(
     var index = 1;
     for (var field in targetType.positionalFields) {
       final indexer = escapeDartString('\$$index');
-      items.add(
-        '$indexer:'
-        '${context.serialize(field.type, '$expression$maybeBang.\$$index')!}',
+      final val = toCodeString(
+        context.serialize(field.type, '$expression$maybeBang.\$$index'),
       );
+      items.add('$indexer:$val');
       index++;
     }
     for (var field in targetType.namedFields) {
       final indexer = escapeDartString(field.name);
-      final key = context.serialize(
-        field.type,
-        '$expression$maybeBang.${field.name}',
-      )!;
+      final key = toCodeString(
+        context.serialize(field.type, '$expression$maybeBang.${field.name}'),
+      );
       items.add('$indexer:$key');
     }
 

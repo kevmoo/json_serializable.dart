@@ -31,7 +31,7 @@ class LambdaResult {
   static String process(Object subField) =>
       (subField is LambdaResult && closureArg == subField._fullExpression)
       ? subField.lambda
-      : '($closureArg) => $subField';
+      : '($closureArg) => ${toCodeString(subField)}';
 }
 
 String _cast(String expression, DartType targetType) {
@@ -60,7 +60,7 @@ String _cast(String expression, DartType targetType) {
   final defaultDecodeValue = defaultDecodeLogic(targetType, expression);
 
   if (defaultDecodeValue != null) {
-    return defaultDecodeValue;
+    return toCodeString(defaultDecodeValue);
   }
 
   final typeCode = typeToCode(targetType);

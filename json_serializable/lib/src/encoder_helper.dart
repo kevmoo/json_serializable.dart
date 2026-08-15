@@ -187,9 +187,12 @@ mixin EncodeHelper implements HelperCore {
 
   String _serializeField(FieldElement field, String accessExpression) {
     try {
-      return getHelperContext(
+      final res = getHelperContext(
         field,
-      ).serialize(field.type, accessExpression).toString();
+      ).serialize(field.type, accessExpression);
+      return res is Expression
+          ? res.accept(DartEmitter()).toString()
+          : res.toString();
     } on UnsupportedTypeError catch (e) // ignore: avoid_catching_errors
     {
       throw createInvalidGenerationError('toJson', field, e);
@@ -199,9 +202,10 @@ mixin EncodeHelper implements HelperCore {
   String _serializePatchField(FieldElement field, String accessExpression) {
     try {
       final type = field.type.promoteNonNullable();
-      return getHelperContext(
-        field,
-      ).serialize(type, accessExpression).toString();
+      final res = getHelperContext(field).serialize(type, accessExpression);
+      return res is Expression
+          ? res.accept(DartEmitter()).toString()
+          : res.toString();
     } on UnsupportedTypeError catch (e) // ignore: avoid_catching_errors
     {
       throw createInvalidGenerationError('toJson', field, e);

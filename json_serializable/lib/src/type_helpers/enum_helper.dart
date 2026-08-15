@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:source_helper/source_helper.dart';
 
@@ -16,7 +17,7 @@ class EnumHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const EnumHelper();
 
   @override
-  String? serialize(
+  Object? serialize(
     DartType targetType,
     String expression,
     TypeHelperContextWithConfig context,
@@ -29,16 +30,18 @@ class EnumHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     context.addMember(memberContent);
 
+    final map = refer(constMapName(targetType)).index(refer(expression));
+
     if (targetType.isNullableType ||
         enumFieldWithNullInEncodeMap(targetType) == true) {
-      return '${constMapName(targetType)}[$expression]';
+      return map;
     } else {
-      return '${constMapName(targetType)}[$expression]!';
+      return map.nullChecked;
     }
   }
 
   @override
-  String? deserialize(
+  Object? deserialize(
     DartType targetType,
     String expression,
     TypeHelperContextWithConfig context,
@@ -62,22 +65,20 @@ class EnumHelper extends TypeHelper<TypeHelperContextWithConfig> {
       );
     }
 
-    String functionName;
-    if (targetType.isNullableType || defaultProvided) {
-      functionName = r'$enumDecodeNullable';
-    } else {
-      functionName = r'$enumDecode';
-    }
+    final functionName = (targetType.isNullableType || defaultProvided)
+        ? r'$enumDecodeNullable'
+        : r'$enumDecode';
 
     context.addMember(memberContent);
 
-    final args = [
-      constMapName(targetType),
-      expression,
+    final namedArgs = <String, Expression>{
       if (jsonKey.unknownEnumValue != null)
-        'unknownValue: ${jsonKey.unknownEnumValue}',
-    ];
+        'unknownValue': CodeExpression(Code(jsonKey.unknownEnumValue!)),
+    };
 
-    return '$functionName(${args.join(', ')})';
+    return refer(functionName).call([
+      refer(constMapName(targetType)),
+      CodeExpression(Code(expression)),
+    ], namedArgs);
   }
 }

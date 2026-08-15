@@ -2,6 +2,8 @@
 // for details. All rights reserved. Use of this source code is governed by a
 // BSD-style license that can be found in the LICENSE file.
 
+import 'package:code_builder/code_builder.dart';
+
 import 'lambda_result.dart';
 import 'utils.dart';
 
@@ -19,11 +21,14 @@ class DefaultContainer {
     String? defaultValue,
   }) {
     if (value is DefaultContainer) {
+      final outputStr = value.output is Expression
+          ? (value.output as Expression).accept(DartEmitter()).toString()
+          : value.output.toString();
       if (defaultValue != null || nullable) {
         return ifNullOrElse(
           value.expression,
           defaultValue ?? 'null',
-          value.output.toString(),
+          outputStr,
         );
       }
       value = value.output;
@@ -34,11 +39,12 @@ class DefaultContainer {
     }
 
     if (defaultValue != null) {
-      value = '$value ?? $defaultValue';
+      final str = toCodeString(value);
+      value = '$str ?? $defaultValue';
     }
     return value;
   }
 
   @override
-  String toString() => deserialize(this).toString();
+  String toString() => toCodeString(deserialize(this));
 }

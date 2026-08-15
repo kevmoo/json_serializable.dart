@@ -145,6 +145,8 @@ mixin DecodeHelper implements HelperCore {
             ..add(data.content.returned.statement);
         }
       } else {
+        // TODO: https://github.com/dart-lang/tools/issues/2524 - trailing
+        // space prevents `?..` collision in code_builder cascade emission.
         final expr = data.fieldsToSet.fold<Expression>(
           data.content,
           (current, field) => current
@@ -261,19 +263,22 @@ mixin DecodeHelper implements HelperCore {
     final readValueFunc = jsonKey.readValueFunctionName;
     final patchTriState = usesExplicitJsonNullWhenNonNullField(jsonKey);
 
-    String deserialize(String expression, {bool patchPresentValue = false}) =>
-        (patchPresentValue
-                ? contextHelper.deserializePresentJsonValue(
-                    targetType,
-                    expression,
-                    defaultValue: defaultValue,
-                  )
-                : contextHelper.deserialize(
-                    targetType,
-                    expression,
-                    defaultValue: defaultValue,
-                  ))
-            .toString();
+    String deserialize(String expression, {bool patchPresentValue = false}) {
+      final res = patchPresentValue
+          ? contextHelper.deserializePresentJsonValue(
+              targetType,
+              expression,
+              defaultValue: defaultValue,
+            )
+          : contextHelper.deserialize(
+              targetType,
+              expression,
+              defaultValue: defaultValue,
+            );
+      return res is Expression
+          ? res.accept(DartEmitter()).toString()
+          : res.toString();
+    }
 
     String value;
     try {

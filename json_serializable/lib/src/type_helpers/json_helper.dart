@@ -4,6 +4,8 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart'
+    hide Enum, FunctionType, RecordType;
 import 'package:source_gen/source_gen.dart';
 import 'package:source_helper/source_helper.dart';
 
@@ -25,7 +27,7 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
   /// By default, JSON encoding in from `dart:convert` calls `toJson()` on
   /// provided objects.
   @override
-  String? serialize(
+  Object? serialize(
     DartType targetType,
     String expression,
     TypeHelperContextWithConfig context,
@@ -59,10 +61,14 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
     }
 
     if (context.config.explicitToJson || toJsonArgs.isNotEmpty) {
-      return '$expression${interfaceType.isNullableType ? '?' : ''}'
-          '.toJson(${toJsonArgs.map((a) => '$a, ').join()} )';
+      final target = refer(expression);
+      final prop = interfaceType.isNullableType
+          ? target.nullSafeProperty('toJson')
+          : target.property('toJson');
+      final posArgs = toJsonArgs.map((a) => CodeExpression(Code(a))).toList();
+      return prop.call(posArgs);
     }
-    return expression;
+    return CodeExpression(Code(expression));
   }
 
   @override
@@ -105,7 +111,7 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
         }
       }
 
-      output = context.deserialize(asCastType, output).toString();
+      output = toCodeString(context.deserialize(asCastType, output));
 
       final args = [
         output,
@@ -162,7 +168,7 @@ List<String> _helperParams(
     // TODO: throw here if `typeParamIndex` is -1 ?
     final typeArg = type.typeArguments[typeParamIndex];
     final body = execute(typeArg, _helperLambdaParam);
-    args.add('($_helperLambdaParam) => $body');
+    args.add('($_helperLambdaParam) => ${toCodeString(body)}');
   }
 
   return args;

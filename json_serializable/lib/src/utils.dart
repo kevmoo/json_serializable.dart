@@ -5,6 +5,7 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide Enum, RecordType;
 import 'package:json_annotation/json_annotation.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:source_helper/source_helper.dart';
@@ -250,28 +251,45 @@ String _recordTypeToCode(RecordType type, bool forceNullable) {
   return buffer.toString();
 }
 
-String? defaultDecodeLogic(
+/// Converts [obj] to a Dart code String, properly evaluating [Expression]s
+/// with [DartEmitter] when present.
+String toCodeString(Object? obj) {
+  if (obj is Expression) {
+    return obj.accept(DartEmitter()).toString();
+  }
+  return obj.toString();
+}
+
+Object? defaultDecodeLogic(
   DartType targetType,
   String expression, {
   bool defaultProvided = false,
 }) {
   if (targetType.isDartCoreObject && !targetType.isNullableType) {
     final question = defaultProvided ? '?' : '';
-    return '$expression as Object$question';
+    // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
+    // for unparenthesized argument cast.
+    return CodeExpression(Code('$expression as Object$question'));
   } else if (targetType.isDartCoreObject || targetType is DynamicType) {
     // just return it as-is. We'll hope it's safe.
-    return expression;
+    return CodeExpression(Code(expression));
   } else if (targetType.isDartCoreDouble) {
     final targetTypeNullable = defaultProvided || targetType.isNullableType;
-    final question = targetTypeNullable ? '?' : '';
-    return '($expression as num$question)$question.toDouble()';
+    final numType = targetTypeNullable ? refer('num?') : refer('num');
+    return targetTypeNullable
+        ? refer(expression).asA(numType).nullSafeProperty('toDouble').call([])
+        : refer(expression).asA(numType).property('toDouble').call([]);
   } else if (targetType.isDartCoreInt) {
     final targetTypeNullable = defaultProvided || targetType.isNullableType;
-    final question = targetTypeNullable ? '?' : '';
-    return '($expression as num$question)$question.toInt()';
+    final numType = targetTypeNullable ? refer('num?') : refer('num');
+    return targetTypeNullable
+        ? refer(expression).asA(numType).nullSafeProperty('toInt').call([])
+        : refer(expression).asA(numType).property('toInt').call([]);
   } else if (simpleJsonTypeChecker.isAssignableFromType(targetType)) {
     final typeCode = typeToCode(targetType, forceNullable: defaultProvided);
-    return '$expression as $typeCode';
+    // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
+    // for unparenthesized argument cast.
+    return CodeExpression(Code('$expression as $typeCode'));
   }
 
   return null;

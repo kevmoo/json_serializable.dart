@@ -9,6 +9,7 @@ import '../constants.dart';
 import '../shared_checkers.dart';
 import '../type_helper.dart';
 import '../unsupported_type_error.dart';
+import '../utils.dart';
 import 'to_from_string.dart';
 
 const _keyParam = 'k';
@@ -33,10 +34,13 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     _checkSafeKeyType(expression, keyType);
 
-    final subFieldValue = context.serialize(valueType, closureArg);
-    final subKeyValue =
-        _forType(keyType)?.serialize(keyType, _keyParam, false) ??
-        context.serialize(keyType, _keyParam);
+    final subFieldValue = toCodeString(
+      context.serialize(valueType, closureArg),
+    );
+    final subKeyValue = toCodeString(
+      _forType(keyType)?.serialize(keyType, _keyParam, false) ??
+          context.serialize(keyType, _keyParam),
+    );
 
     if (closureArg == subFieldValue && _keyParam == subKeyValue) {
       return expression;
@@ -112,7 +116,7 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     String keyUsage;
     if (keyArg.isEnum) {
-      keyUsage = context.deserialize(keyArg, _keyParam).toString();
+      keyUsage = toCodeString(context.deserialize(keyArg, _keyParam));
     } else if (context.config.anyMap &&
         !(keyArg.isDartCoreObject || keyArg is DynamicType)) {
       keyUsage = '$_keyParam as String';
@@ -126,13 +130,14 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     final toFromString = _forType(keyArg);
     if (toFromString != null) {
-      keyUsage = toFromString
-          .deserialize(keyArg, keyUsage, false, true)
-          .toString();
+      keyUsage = toCodeString(
+        toFromString.deserialize(keyArg, keyUsage, false, true),
+      );
     }
 
+    final valUsage = toCodeString(itemSubVal);
     return '($expression $mapCast)$optionalQuestion.map( '
-        '($_keyParam, $closureArg) => MapEntry($keyUsage, $itemSubVal),)';
+        '($_keyParam, $closureArg) => MapEntry($keyUsage, $valUsage),)';
   }
 }
 

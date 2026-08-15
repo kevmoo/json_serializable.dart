@@ -9,34 +9,29 @@ import 'package:source_helper/source_helper.dart';
 
 import '../default_container.dart';
 import '../type_helper.dart';
-import '../utils.dart';
 
 class DurationHelper extends TypeHelper {
   const DurationHelper();
 
   @override
-  Object? serialize(
+  Expression? serialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContext context,
   ) {
     if (!_matchesType(targetType)) {
       return null;
     }
 
-    final expr = expression is Expression
-        ? expression
-        : refer(toCodeString(expression));
-
     return targetType.isNullableType
-        ? expr.nullSafeProperty('inMicroseconds')
-        : expr.property('inMicroseconds');
+        ? expression.nullSafeProperty('inMicroseconds')
+        : expression.property('inMicroseconds');
   }
 
   @override
-  Object? deserialize(
+  DefaultContainer? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) {
@@ -44,13 +39,9 @@ class DurationHelper extends TypeHelper {
       return null;
     }
 
-    final expr = expression is Expression
-        ? expression
-        : refer(toCodeString(expression));
-
     // Duration(microseconds: ($expression as num).toInt())
     final output = refer('Duration').newInstance([], {
-      'microseconds': expr.asA(refer('num')).property('toInt').call([]),
+      'microseconds': expression.asA(refer('num')).property('toInt').call([]),
     });
 
     return DefaultContainer(expression, output);

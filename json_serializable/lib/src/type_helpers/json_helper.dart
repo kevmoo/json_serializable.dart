@@ -27,9 +27,9 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
   /// By default, JSON encoding in from `dart:convert` calls `toJson()` on
   /// provided objects.
   @override
-  Object? serialize(
+  Expression? serialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
   ) {
     if (!_canSerialize(context.config, targetType)) {
@@ -60,24 +60,20 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
       );
     }
 
-    final target = expression is Expression
-        ? expression
-        : refer(toCodeString(expression));
-
     if (context.config.explicitToJson || toJsonArgs.isNotEmpty) {
       final prop = interfaceType.isNullableType
-          ? target.nullSafeProperty('toJson')
-          : target.property('toJson');
+          ? expression.nullSafeProperty('toJson')
+          : expression.property('toJson');
       final posArgs = toJsonArgs.map((a) => CodeExpression(Code(a))).toList();
       return prop.call(posArgs);
     }
-    return target;
+    return expression;
   }
 
   @override
-  Object? deserialize(
+  DefaultContainer? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -91,9 +87,7 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
         .where((ce) => ce.name == 'fromJson')
         .singleOrNull;
 
-    var output = expression is Expression
-        ? expression
-        : CodeExpression(Code(toCodeString(expression)));
+    var output = expression;
 
     if (fromJsonCtor != null) {
       final positionalParams = fromJsonCtor.formalParameters
@@ -156,7 +150,7 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
 }
 
 List<String> _helperParams(
-  Object? Function(DartType, Object) execute,
+  Expression? Function(DartType, Expression) execute,
   TypeParameterType Function(FormalParameterElement, Element) paramMapper,
   InterfaceType type,
   Iterable<FormalParameterElement> positionalParams,
@@ -176,7 +170,7 @@ List<String> _helperParams(
 
     // TODO: throw here if `typeParamIndex` is -1 ?
     final typeArg = type.typeArguments[typeParamIndex];
-    final body = execute(typeArg, _helperLambdaParam);
+    final body = execute(typeArg, refer(_helperLambdaParam));
     args.add('($_helperLambdaParam) => ${toCodeString(body)}');
   }
 

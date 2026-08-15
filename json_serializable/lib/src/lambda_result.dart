@@ -16,7 +16,8 @@ import 'utils.dart';
 /// Allows generated code to support the
 /// https://dart-lang.github.io/linter/lints/unnecessary_lambdas.html
 /// lint.
-class LambdaResult {
+class LambdaResult extends Expression {
+  @override
   final Expression expression;
   final String lambda;
   final DartType? asContent;
@@ -24,17 +25,18 @@ class LambdaResult {
   Expression get _fullExpression =>
       asContent != null ? _cast(expression, asContent!) : expression;
 
-  LambdaResult(Object expression, this.lambda, {this.asContent})
-    : expression = expression is Expression
-          ? expression
-          : CodeExpression(Code(toCodeString(expression)));
+  LambdaResult(this.expression, this.lambda, {this.asContent});
 
-  Expression asInvocation() => refer(lambda).call([_fullExpression]);
+  Expression get asInvocation => refer(lambda).call([_fullExpression]);
 
   @override
-  String toString() => toCodeString(asInvocation());
+  R accept<R>(ExpressionVisitor<R> visitor, [R? context]) =>
+      asInvocation.accept(visitor, context);
 
-  static Expression process(Object subField) {
+  @override
+  String toString() => toCodeString(asInvocation);
+
+  static Expression process(Expression subField) {
     if (subField is LambdaResult &&
         closureArg == toCodeString(subField._fullExpression)) {
       return refer(subField.lambda);
@@ -43,11 +45,7 @@ class LambdaResult {
       (m) => m
         ..requiredParameters.add(Parameter((p) => p..name = closureArg))
         ..lambda = true
-        ..body = subField is Expression
-            ? subField.code
-            : (subField is LambdaResult
-                  ? subField.asInvocation().code
-                  : Code(toCodeString(subField))),
+        ..body = subField.code,
     ).closure;
   }
 }
@@ -80,12 +78,10 @@ Expression _cast(Expression expression, DartType targetType) {
     }
   }
 
-  final defaultDecodeValue = defaultDecodeLogic(targetType, exprStr);
+  final defaultDecodeValue = defaultDecodeLogic(targetType, expression);
 
   if (defaultDecodeValue != null) {
-    return defaultDecodeValue is Expression
-        ? defaultDecodeValue
-        : CodeExpression(Code(toCodeString(defaultDecodeValue)));
+    return defaultDecodeValue;
   }
 
   final typeCode = typeToCode(targetType);

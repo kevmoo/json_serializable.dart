@@ -5,6 +5,7 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide RecordType;
 import 'package:source_helper/source_helper.dart';
 
 import 'default_container.dart';
@@ -49,16 +50,16 @@ class TypeHelperCtx
   }
 
   @override
-  Object? serialize(DartType targetType, Object expression) => _run(
+  Expression? serialize(DartType targetType, Expression expression) => _run(
     targetType,
     expression,
     (TypeHelper th) => th.serialize(targetType, expression, this),
   );
 
   @override
-  Object deserialize(
+  Expression deserialize(
     DartType targetType,
-    Object expression, {
+    Expression expression, {
     String? defaultValue,
   }) {
     final value = _run(
@@ -80,9 +81,9 @@ class TypeHelperCtx
   ///
   /// Used when a JSON key is present (including when its value is JSON `null`)
   /// for PATCH tri-state fields, so explicit `null` is passed to `fromJson`.
-  Object deserializePresentJsonValue(
+  Expression deserializePresentJsonValue(
     DartType targetType,
-    Object expression, {
+    Expression expression, {
     String? defaultValue,
   }) {
     final value = _run(
@@ -95,10 +96,10 @@ class TypeHelperCtx
     return DefaultContainer.deserialize(value, defaultValue: defaultValue);
   }
 
-  Object _run(
+  Expression _run(
     DartType targetType,
-    Object expression,
-    Object? Function(TypeHelper) invoke,
+    Expression expression,
+    Expression? Function(TypeHelper) invoke,
   ) =>
       _helperCore.allTypeHelpers
               .map(invoke)
@@ -109,7 +110,7 @@ class TypeHelperCtx
                   toCodeString(expression),
                 ),
               )
-          as Object;
+          as Expression;
 }
 
 class _ConvertPair {

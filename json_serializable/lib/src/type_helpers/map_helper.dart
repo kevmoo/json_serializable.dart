@@ -19,9 +19,9 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const MapHelper();
 
   @override
-  Object? serialize(
+  Expression? serialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
   ) {
     if (!coreMapTypeChecker.isAssignableFromType(targetType)) {
@@ -36,32 +36,24 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final exprStr = toCodeString(expression);
     _checkSafeKeyType(exprStr, keyType);
 
-    final subFieldValue = context.serialize(valueType, closureArg);
+    final subFieldValue = context.serialize(valueType, refer(closureArg));
     final subFieldValueStr = toCodeString(subFieldValue);
     final subKeyValue =
-        _forType(keyType)?.serialize(keyType, _keyParam, false) ??
-        context.serialize(keyType, _keyParam);
+        _forType(keyType)?.serialize(keyType, refer(_keyParam), false) ??
+        context.serialize(keyType, refer(_keyParam));
     final subKeyValueStr = toCodeString(subKeyValue);
 
     if (closureArg == subFieldValueStr && _keyParam == subKeyValueStr) {
-      return expression is Expression
-          ? expression
-          : CodeExpression(Code(exprStr));
+      return expression;
     }
 
-    final target = expression is Expression ? expression : refer(exprStr);
     final mapProperty = targetType.isNullableType
-        ? target.nullSafeProperty('map')
-        : target.property('map');
+        ? expression.nullSafeProperty('map')
+        : expression.property('map');
 
-    final keyExpr = subKeyValue is Expression
-        ? subKeyValue
-        : CodeExpression(Code(subKeyValueStr));
-    final valExpr = subFieldValue is Expression
-        ? subFieldValue
-        : CodeExpression(Code(subFieldValueStr));
-
-    final mapEntry = refer('MapEntry').newInstance([keyExpr, valExpr]);
+    final mapEntry = refer(
+      'MapEntry',
+    ).newInstance([subKeyValue!, subFieldValue!]);
 
     final closure = Method(
       (m) => m
@@ -77,9 +69,9 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
   }
 
   @override
-  Object? deserialize(
+  Expression? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -140,11 +132,11 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
     // In this case, we're going to create a new Map with matching reified
     // types.
 
-    final itemSubVal = context.deserialize(valueArg, closureArg);
+    final itemSubVal = context.deserialize(valueArg, refer(closureArg));
 
-    Object keyUsage;
+    Expression keyUsage;
     if (keyArg.isEnum) {
-      keyUsage = context.deserialize(keyArg, _keyParam)!;
+      keyUsage = context.deserialize(keyArg, refer(_keyParam))!;
     } else if (context.config.anyMap &&
         !(keyArg.isDartCoreObject || keyArg is DynamicType)) {
       // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
@@ -167,21 +159,12 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     final mapTypeStr = context.config.anyMap ? 'Map' : 'Map<String, dynamic>';
     final castType = refer('$mapTypeStr${targetTypeIsNullable ? '?' : ''}');
-    final target = expression is Expression
-        ? expression.asA(castType)
-        : refer(exprStr).asA(castType);
+    final target = expression.asA(castType);
     final mapProperty = targetTypeIsNullable
         ? target.nullSafeProperty('map')
         : target.property('map');
 
-    final keyExpr = keyUsage is Expression
-        ? keyUsage
-        : CodeExpression(Code(toCodeString(keyUsage)));
-    final valExpr = itemSubVal is Expression
-        ? itemSubVal
-        : CodeExpression(Code(toCodeString(itemSubVal)));
-
-    final mapEntry = refer('MapEntry').newInstance([keyExpr, valExpr]);
+    final mapEntry = refer('MapEntry').newInstance([keyUsage, itemSubVal!]);
 
     final closure = Method(
       (m) => m

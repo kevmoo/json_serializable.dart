@@ -9,9 +9,9 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const RecordHelper();
 
   @override
-  Object? deserialize(
+  Expression? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -25,18 +25,20 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
     var index = 1;
     for (var field in targetType.positionalFields) {
       final indexer = escapeDartString('\$$index');
-      final val = context.deserialize(field.type, '$paramName[$indexer]');
-      positionalItems.add(
-        val is Expression ? val : CodeExpression(Code(toCodeString(val))),
+      final val = context.deserialize(
+        field.type,
+        refer(paramName).index(CodeExpression(Code(indexer))),
       );
+      positionalItems.add(val!);
       index++;
     }
     for (var field in targetType.namedFields) {
       final indexer = escapeDartString(field.name);
-      final val = context.deserialize(field.type, '$paramName[$indexer]');
-      namedItems[field.name] = val is Expression
-          ? val
-          : CodeExpression(Code(toCodeString(val)));
+      final val = context.deserialize(
+        field.type,
+        refer(paramName).index(CodeExpression(Code(indexer))),
+      );
+      namedItems[field.name] = val!;
     }
 
     if (positionalItems.isEmpty && namedItems.isEmpty) {
@@ -64,17 +66,13 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
         ..body = recordLiteral.code,
     ).closure;
 
-    final expr = expression is Expression
-        ? expression
-        : CodeExpression(Code(toCodeString(expression)));
-
-    return refer(helperName).call([expr, closure]);
+    return refer(helperName).call([expression, closure]);
   }
 
   @override
-  Object? serialize(
+  Expression? serialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
   ) {
     if (targetType is! RecordType) return null;
@@ -87,21 +85,20 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
     var index = 1;
     for (var field in targetType.positionalFields) {
       final indexer = literalString('\$$index', raw: true);
-      final val = context.serialize(field.type, '$exprStr$maybeBang.\$$index');
-      mapEntries[indexer] = val is Expression
-          ? val
-          : CodeExpression(Code(toCodeString(val)));
+      final val = context.serialize(
+        field.type,
+        CodeExpression(Code('$exprStr$maybeBang.\$$index')),
+      );
+      mapEntries[indexer] = val!;
       index++;
     }
     for (var field in targetType.namedFields) {
       final indexer = literalString(field.name);
       final val = context.serialize(
         field.type,
-        '$exprStr$maybeBang.${field.name}',
+        CodeExpression(Code('$exprStr$maybeBang.${field.name}')),
       );
-      mapEntries[indexer] = val is Expression
-          ? val
-          : CodeExpression(Code(toCodeString(val)));
+      mapEntries[indexer] = val!;
     }
 
     final mapLiteral = literalMap(
@@ -110,10 +107,8 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
       refer('dynamic'),
     );
 
-    final targetExpr = expression is Expression ? expression : refer(exprStr);
-
     return targetType.isNullableType
-        ? targetExpr.equalTo(literalNull).conditional(literalNull, mapLiteral)
+        ? expression.equalTo(literalNull).conditional(literalNull, mapLiteral)
         : mapLiteral;
   }
 }

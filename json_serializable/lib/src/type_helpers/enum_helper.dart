@@ -10,7 +10,6 @@ import 'package:source_helper/source_helper.dart';
 import '../enum_utils.dart';
 import '../json_key_utils.dart';
 import '../type_helper.dart';
-import '../utils.dart';
 
 final simpleExpression = RegExp(r'^[a-zA-Z_]+$');
 
@@ -18,9 +17,9 @@ class EnumHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const EnumHelper();
 
   @override
-  Object? serialize(
+  Expression? serialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
   ) {
     final memberContent = enumValueMapFromType(targetType);
@@ -31,10 +30,7 @@ class EnumHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     context.addMember(memberContent);
 
-    final expr = expression is Expression
-        ? expression
-        : refer(toCodeString(expression));
-    final map = refer(constMapName(targetType)).index(expr);
+    final map = refer(constMapName(targetType)).index(expression);
 
     if (targetType.isNullableType ||
         enumFieldWithNullInEncodeMap(targetType) == true) {
@@ -45,9 +41,9 @@ class EnumHelper extends TypeHelper<TypeHelperContextWithConfig> {
   }
 
   @override
-  Object? deserialize(
+  Expression? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -80,12 +76,8 @@ class EnumHelper extends TypeHelper<TypeHelperContextWithConfig> {
         'unknownValue': CodeExpression(Code(jsonKey.unknownEnumValue!)),
     };
 
-    final expr = expression is Expression
-        ? expression
-        : CodeExpression(Code(toCodeString(expression)));
-
     return refer(
       functionName,
-    ).call([refer(constMapName(targetType)), expr], namedArgs);
+    ).call([refer(constMapName(targetType)), expression], namedArgs);
   }
 }

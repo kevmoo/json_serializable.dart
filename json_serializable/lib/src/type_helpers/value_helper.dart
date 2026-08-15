@@ -15,26 +15,24 @@ class ValueHelper extends TypeHelper {
   const ValueHelper();
 
   @override
-  Object? serialize(
+  Expression? serialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContext context,
   ) {
     if (targetType.isDartCoreObject ||
         targetType is DynamicType ||
         simpleJsonTypeChecker.isAssignableFromType(targetType)) {
-      return expression is Expression
-          ? expression
-          : CodeExpression(Code(toCodeString(expression)));
+      return expression;
     }
 
     return null;
   }
 
   @override
-  Object? deserialize(
+  Expression? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) => defaultDecodeLogic(

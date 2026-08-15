@@ -17,9 +17,9 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const IterableHelper();
 
   @override
-  Object? serialize(
+  Expression? serialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContextWithConfig context,
   ) {
     if (!coreIterableTypeChecker.isAssignableFromType(targetType)) {
@@ -32,14 +32,12 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
     // Although it's possible that child elements may be marked unsafe
 
     var isList = _coreListChecker.isAssignableFromType(targetType);
-    final subField = context.serialize(itemType, closureArg)!;
+    final subField = context.serialize(itemType, refer(closureArg))!;
     final subFieldStr = toCodeString(subField);
 
     var optionalQuestion = targetType.isNullableType;
 
-    var expr = expression is Expression
-        ? expression
-        : refer(toCodeString(expression));
+    var expr = expression;
 
     // In the case of trivial JSON types (int, String, etc), `subField`
     // will be identical to `substitute` – so no explicit mapping is needed.
@@ -70,9 +68,9 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
   }
 
   @override
-  Object? deserialize(
+  Expression? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) {
@@ -84,7 +82,10 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     final iterableGenericType = coreIterableGenericType(targetType);
 
-    final itemSubVal = context.deserialize(iterableGenericType, closureArg)!;
+    final itemSubVal = context.deserialize(
+      iterableGenericType,
+      refer(closureArg),
+    )!;
     final itemSubValStr = toCodeString(itemSubVal);
 
     final targetTypeIsNullable = defaultProvided || targetType.isNullableType;
@@ -101,8 +102,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
     }
 
     final castType = refer('List<dynamic>${targetTypeIsNullable ? '?' : ''}');
-    final targetExpr = expression is Expression ? expression : refer(exprStr);
-    var output = targetExpr.asA(castType);
+    var output = expression.asA(castType);
 
     var optionalQuestion = targetTypeIsNullable;
 

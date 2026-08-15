@@ -260,15 +260,12 @@ String toCodeString(Object? obj) {
   return obj.toString();
 }
 
-Object? defaultDecodeLogic(
+Expression? defaultDecodeLogic(
   DartType targetType,
-  Object expression, {
+  Expression expression, {
   bool defaultProvided = false,
 }) {
   final exprStr = toCodeString(expression);
-  final expr = expression is Expression
-      ? expression
-      : CodeExpression(Code(exprStr));
 
   if (targetType.isDartCoreObject && !targetType.isNullableType) {
     final question = defaultProvided ? '?' : '';
@@ -277,19 +274,19 @@ Object? defaultDecodeLogic(
     return CodeExpression(Code('$exprStr as Object$question'));
   } else if (targetType.isDartCoreObject || targetType is DynamicType) {
     // just return it as-is. We'll hope it's safe.
-    return expr;
+    return expression;
   } else if (targetType.isDartCoreDouble) {
     final targetTypeNullable = defaultProvided || targetType.isNullableType;
     final numType = targetTypeNullable ? refer('num?') : refer('num');
     return targetTypeNullable
-        ? expr.asA(numType).nullSafeProperty('toDouble').call([])
-        : expr.asA(numType).property('toDouble').call([]);
+        ? expression.asA(numType).nullSafeProperty('toDouble').call([])
+        : expression.asA(numType).property('toDouble').call([]);
   } else if (targetType.isDartCoreInt) {
     final targetTypeNullable = defaultProvided || targetType.isNullableType;
     final numType = targetTypeNullable ? refer('num?') : refer('num');
     return targetTypeNullable
-        ? expr.asA(numType).nullSafeProperty('toInt').call([])
-        : expr.asA(numType).property('toInt').call([]);
+        ? expression.asA(numType).nullSafeProperty('toInt').call([])
+        : expression.asA(numType).property('toInt').call([]);
   } else if (simpleJsonTypeChecker.isAssignableFromType(targetType)) {
     final typeCode = typeToCode(targetType, forceNullable: defaultProvided);
     // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression

@@ -263,7 +263,10 @@ mixin DecodeHelper implements HelperCore {
     final readValueFunc = jsonKey.readValueFunctionName;
     final patchTriState = usesExplicitJsonNullWhenNonNullField(jsonKey);
 
-    String deserialize(Object expression, {bool patchPresentValue = false}) {
+    String deserialize(
+      Expression expression, {
+      bool patchPresentValue = false,
+    }) {
       final res = patchPresentValue
           ? contextHelper.deserializePresentJsonValue(
               targetType,
@@ -275,9 +278,7 @@ mixin DecodeHelper implements HelperCore {
               expression,
               defaultValue: defaultValue,
             );
-      return res is Expression
-          ? res.accept(DartEmitter()).toString()
-          : res.toString();
+      return toCodeString(res);
     }
 
     String value;

@@ -4,6 +4,7 @@
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide RecordType;
 
 import 'type_helpers/config_types.dart';
 
@@ -18,11 +19,11 @@ abstract class TypeHelperContext {
 
   /// [expression] may be just the name of the field or it may an expression
   /// representing the serialization of a value.
-  Object? serialize(DartType fieldType, Object expression);
+  Expression? serialize(DartType fieldType, Expression expression);
 
   /// [expression] may be just the name of the field or it may an expression
   /// representing the serialization of a value.
-  Object? deserialize(DartType fieldType, Object expression);
+  Expression? deserialize(DartType fieldType, Expression expression);
 
   /// Adds [memberContent] to the set of generated, top-level members.
   void addMember(String memberContent);
@@ -41,15 +42,15 @@ abstract class TypeHelper<T extends TypeHelperContext> {
   /// object of type [targetType].
   ///
   /// If [targetType] is not supported, returns `null`.
-  Object? serialize(DartType targetType, Object expression, T context);
+  Expression? serialize(DartType targetType, Expression expression, T context);
 
   /// Returns Dart code that deserializes an [expression] representing a JSON
   /// literal to into [targetType].
   ///
   /// If [targetType] is not supported, returns `null`.
-  Object? deserialize(
+  Expression? deserialize(
     DartType targetType,
-    Object expression,
+    Expression expression,
     T context,
     bool defaultProvided,
   );

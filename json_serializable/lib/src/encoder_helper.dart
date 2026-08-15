@@ -188,27 +188,23 @@ mixin EncodeHelper implements HelperCore {
 
   static const _toJsonParamName = 'instance';
 
-  String _serializeField(FieldElement field, Object accessExpression) {
+  String _serializeField(FieldElement field, Expression accessExpression) {
     try {
       final res = getHelperContext(
         field,
       ).serialize(field.type, accessExpression);
-      return res is Expression
-          ? res.accept(DartEmitter()).toString()
-          : res.toString();
+      return toCodeString(res);
     } on UnsupportedTypeError catch (e) // ignore: avoid_catching_errors
     {
       throw createInvalidGenerationError('toJson', field, e);
     }
   }
 
-  String _serializePatchField(FieldElement field, Object accessExpression) {
+  String _serializePatchField(FieldElement field, Expression accessExpression) {
     try {
       final type = field.type.promoteNonNullable();
       final res = getHelperContext(field).serialize(type, accessExpression);
-      return res is Expression
-          ? res.accept(DartEmitter()).toString()
-          : res.toString();
+      return toCodeString(res);
     } on UnsupportedTypeError catch (e) // ignore: avoid_catching_errors
     {
       throw createInvalidGenerationError('toJson', field, e);

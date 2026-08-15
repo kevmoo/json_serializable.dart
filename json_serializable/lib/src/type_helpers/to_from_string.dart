@@ -48,21 +48,17 @@ class ToFromStringHelper {
 
   bool matches(DartType type) => _checker.isExactlyType(type);
 
-  Object? serialize(DartType type, Object expression, bool nullable) {
+  Expression? serialize(DartType type, Expression expression, bool nullable) {
     if (!matches(type)) {
       return null;
     }
-
-    final expr = expression is Expression
-        ? expression
-        : refer(toCodeString(expression));
 
     if (_toString.endsWith('()')) {
       final methodChain = _toString
           .substring(0, _toString.length - 2)
           .split('().')
           .toList();
-      var current = expr;
+      var current = expression;
       for (var i = 0; i < methodChain.length; i++) {
         final prop = methodChain[i];
         if (i == 0 && nullable) {
@@ -75,13 +71,13 @@ class ToFromStringHelper {
     }
 
     return nullable
-        ? expr.nullSafeProperty(_toString)
-        : expr.property(_toString);
+        ? expression.nullSafeProperty(_toString)
+        : expression.property(_toString);
   }
 
   DefaultContainer? deserialize(
     DartType type,
-    Object expression,
+    Expression expression,
     bool nullable,
     bool isString,
   ) {
@@ -93,9 +89,7 @@ class ToFromStringHelper {
     // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
     // for unparenthesized argument cast in parse calls.
     final parseParam = isString
-        ? (expression is Expression
-              ? expression
-              : CodeExpression(Code(exprStr)))
+        ? expression
         : CodeExpression(Code('$exprStr as String'));
 
     final output = refer(_parse).call([parseParam]);

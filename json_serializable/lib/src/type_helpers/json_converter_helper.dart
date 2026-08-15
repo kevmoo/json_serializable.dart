@@ -5,6 +5,7 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide RecordType;
 import 'package:json_annotation/json_annotation.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:source_helper/source_helper.dart';
@@ -89,7 +90,7 @@ Value? $converterFromJsonName<Json, Value>(
   }
 }
 
-String _nullableJsonConverterLambdaResult(
+Expression _nullableJsonConverterLambdaResult(
   _JsonConvertData converter, {
   required String name,
   required DartType targetType,
@@ -101,8 +102,11 @@ String _nullableJsonConverterLambdaResult(
       ? typeToCode(targetType)
       : typeToCode(converter.fieldType);
 
-  return '$name<$jsonDisplayString, $fieldTypeDisplayString>('
-      '$expression, $callback)';
+  return refer(name).call(
+    [CodeExpression(Code(expression)), refer(callback)],
+    {},
+    [refer(jsonDisplayString), refer(fieldTypeDisplayString)],
+  );
 }
 
 class _JsonConvertData {

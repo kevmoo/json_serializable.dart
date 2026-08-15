@@ -10,10 +10,13 @@ import 'utils.dart';
 /// Represents an expression that may be represented differently if there is
 /// a default value available to replace it if `null`.
 class DefaultContainer {
-  final String expression;
+  final Expression expression;
   final Object output;
 
-  DefaultContainer(this.expression, this.output);
+  DefaultContainer(Object expression, this.output)
+    : expression = expression is Expression
+          ? expression
+          : CodeExpression(Code(toCodeString(expression)));
 
   static Object deserialize(
     Object value, {
@@ -21,26 +24,38 @@ class DefaultContainer {
     String? defaultValue,
   }) {
     if (value is DefaultContainer) {
-      final outputStr = value.output is Expression
-          ? (value.output as Expression).accept(DartEmitter()).toString()
-          : value.output.toString();
       if (defaultValue != null || nullable) {
-        return ifNullOrElse(
-          value.expression,
-          defaultValue ?? 'null',
-          outputStr,
-        );
+        final ifNull = defaultValue != null
+            ? CodeExpression(Code(defaultValue))
+            : literalNull;
+        final outputExpr = value.output is LambdaResult
+            ? (value.output as LambdaResult).asInvocation()
+            : (value.output is Expression
+                  ? value.output as Expression
+                  : CodeExpression(Code(toCodeString(value.output))));
+        return value.expression
+            .equalTo(literalNull)
+            .conditional(ifNull, outputExpr);
       }
       value = value.output;
     }
 
     if (value is LambdaResult && defaultValue != null) {
-      return ifNullOrElse(value.expression, defaultValue, value.toString());
+      return value.expression
+          .equalTo(literalNull)
+          .conditional(
+            CodeExpression(Code(defaultValue)),
+            value.asInvocation(),
+          );
     }
 
     if (defaultValue != null) {
-      final str = toCodeString(value);
-      value = '$str ?? $defaultValue';
+      final valExpr = value is Expression
+          ? value
+          : (value is LambdaResult
+                ? value.asInvocation()
+                : CodeExpression(Code(toCodeString(value))));
+      return valExpr.ifNullThen(CodeExpression(Code(defaultValue)));
     }
     return value;
   }

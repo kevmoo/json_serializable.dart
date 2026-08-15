@@ -17,42 +17,55 @@ import 'utils.dart';
 /// https://dart-lang.github.io/linter/lints/unnecessary_lambdas.html
 /// lint.
 class LambdaResult {
-  final String expression;
+  final Expression expression;
   final String lambda;
   final DartType? asContent;
 
-  String get _fullExpression =>
+  Expression get _fullExpression =>
       asContent != null ? _cast(expression, asContent!) : expression;
 
-  LambdaResult(this.expression, this.lambda, {this.asContent});
+  LambdaResult(Object expression, this.lambda, {this.asContent})
+    : expression = expression is Expression
+          ? expression
+          : CodeExpression(Code(toCodeString(expression)));
+
+  Expression asInvocation() => refer(lambda).call([_fullExpression]);
 
   @override
-  String toString() => '$lambda($_fullExpression)';
+  String toString() => toCodeString(asInvocation());
 
-  static Expression process(Object subField) =>
-      (subField is LambdaResult && closureArg == subField._fullExpression)
-      ? refer(subField.lambda)
-      : Method(
-          (m) => m
-            ..requiredParameters.add(Parameter((p) => p..name = closureArg))
-            ..lambda = true
-            ..body = subField is Expression
-                ? subField.code
-                : Code(toCodeString(subField)),
-        ).closure;
+  static Expression process(Object subField) {
+    if (subField is LambdaResult &&
+        closureArg == toCodeString(subField._fullExpression)) {
+      return refer(subField.lambda);
+    }
+    return Method(
+      (m) => m
+        ..requiredParameters.add(Parameter((p) => p..name = closureArg))
+        ..lambda = true
+        ..body = subField is Expression
+            ? subField.code
+            : (subField is LambdaResult
+                  ? subField.asInvocation().code
+                  : Code(toCodeString(subField))),
+    ).closure;
+  }
 }
 
-String _cast(String expression, DartType targetType) {
+Expression _cast(Expression expression, DartType targetType) {
   if (targetType.isLikeDynamic) {
     return expression;
   }
 
+  final exprStr = toCodeString(expression);
   final nullableSuffix = targetType.isNullableType ? '?' : '';
 
   if (coreIterableTypeChecker.isAssignableFromType(targetType)) {
     final itemType = coreIterableGenericType(targetType);
     if (itemType.isLikeDynamic) {
-      return '$expression as List$nullableSuffix';
+      // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
+      // for unparenthesized argument cast.
+      return CodeExpression(Code('$exprStr as List$nullableSuffix'));
     }
   }
 
@@ -61,16 +74,22 @@ String _cast(String expression, DartType targetType) {
     assert(args.length == 2);
 
     if (args.every((e) => e.isLikeDynamic)) {
-      return '$expression as Map$nullableSuffix';
+      // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
+      // for unparenthesized argument cast.
+      return CodeExpression(Code('$exprStr as Map$nullableSuffix'));
     }
   }
 
-  final defaultDecodeValue = defaultDecodeLogic(targetType, expression);
+  final defaultDecodeValue = defaultDecodeLogic(targetType, exprStr);
 
   if (defaultDecodeValue != null) {
-    return toCodeString(defaultDecodeValue);
+    return defaultDecodeValue is Expression
+        ? defaultDecodeValue
+        : CodeExpression(Code(toCodeString(defaultDecodeValue)));
   }
 
   final typeCode = typeToCode(targetType);
-  return '$expression as $typeCode';
+  // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
+  // for unparenthesized argument cast.
+  return CodeExpression(Code('$exprStr as $typeCode'));
 }

@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide RecordType;
 import 'package:source_helper/source_helper.dart';
 
 import 'constants.dart' show closureArg;
@@ -28,10 +29,17 @@ class LambdaResult {
   @override
   String toString() => '$lambda($_fullExpression)';
 
-  static String process(Object subField) =>
+  static Expression process(Object subField) =>
       (subField is LambdaResult && closureArg == subField._fullExpression)
-      ? subField.lambda
-      : '($closureArg) => ${toCodeString(subField)}';
+      ? refer(subField.lambda)
+      : Method(
+          (m) => m
+            ..requiredParameters.add(Parameter((p) => p..name = closureArg))
+            ..lambda = true
+            ..body = subField is Expression
+                ? subField.code
+                : Code(toCodeString(subField)),
+        ).closure;
 }
 
 String _cast(String expression, DartType targetType) {

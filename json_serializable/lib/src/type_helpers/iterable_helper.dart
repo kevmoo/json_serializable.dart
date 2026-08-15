@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide RecordType;
 import 'package:source_gen/source_gen.dart' show TypeChecker;
 import 'package:source_helper/source_helper.dart';
 
@@ -16,7 +17,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const IterableHelper();
 
   @override
-  String? serialize(
+  Object? serialize(
     DartType targetType,
     String expression,
     TypeHelperContextWithConfig context,
@@ -34,7 +35,9 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final subField = context.serialize(itemType, closureArg)!;
     final subFieldStr = toCodeString(subField);
 
-    var optionalQuestion = targetType.isNullableType ? '?' : '';
+    var optionalQuestion = targetType.isNullableType;
+
+    Expression expr = refer(expression);
 
     // In the case of trivial JSON types (int, String, etc), `subField`
     // will be identical to `substitute` – so no explicit mapping is needed.
@@ -42,26 +45,30 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
     if (subFieldStr != closureArg) {
       final lambda = LambdaResult.process(subField);
 
-      expression = '$expression$optionalQuestion.map($lambda)';
+      expr = optionalQuestion
+          ? expr.nullSafeProperty('map').call([lambda])
+          : expr.property('map').call([lambda]);
 
       // expression now represents an Iterable (even if it started as a List
       // ...resetting `isList` to `false`.
       isList = false;
 
       // No need to include the optional question below – it was used here!
-      optionalQuestion = '';
+      optionalQuestion = false;
     }
 
     if (!isList) {
       // If the static type is not a List, generate one.
-      expression += '$optionalQuestion.toList()';
+      expr = optionalQuestion
+          ? expr.nullSafeProperty('toList').call([])
+          : expr.property('toList').call([]);
     }
 
-    return expression;
+    return expr;
   }
 
   @override
-  String? deserialize(
+  Object? deserialize(
     DartType targetType,
     String expression,
     TypeHelperContext context,
@@ -78,36 +85,40 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final itemSubVal = context.deserialize(iterableGenericType, closureArg)!;
     final itemSubValStr = toCodeString(itemSubVal);
 
-    var output = '$expression as List<dynamic>';
-
     final targetTypeIsNullable = defaultProvided || targetType.isNullableType;
-
-    if (targetTypeIsNullable) {
-      output += '?';
-    }
 
     // If `itemSubVal` is the same and it's not a Set, then we don't need to do
     // anything fancy
     if (closureArg == itemSubValStr &&
         !_coreSetChecker.isExactlyType(targetType)) {
-      return output;
+      final castType = 'List<dynamic>${targetTypeIsNullable ? '?' : ''}';
+      // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
+      // for unparenthesized argument cast.
+      return CodeExpression(Code('$expression as $castType'));
     }
 
-    output = '($output)';
+    final castType = refer('List<dynamic>${targetTypeIsNullable ? '?' : ''}');
+    var output = refer(expression).asA(castType);
 
-    var optionalQuestion = targetTypeIsNullable ? '?' : '';
+    var optionalQuestion = targetTypeIsNullable;
 
     if (closureArg != itemSubValStr) {
       final lambda = LambdaResult.process(itemSubVal);
-      output += '$optionalQuestion.map($lambda)';
+      output = optionalQuestion
+          ? output.nullSafeProperty('map').call([lambda])
+          : output.property('map').call([lambda]);
       // No need to include the optional question below – it was used here!
-      optionalQuestion = '';
+      optionalQuestion = false;
     }
 
     if (_coreListChecker.isExactlyType(targetType)) {
-      output += '$optionalQuestion.toList()';
+      output = optionalQuestion
+          ? output.nullSafeProperty('toList').call([])
+          : output.property('toList').call([]);
     } else if (_coreSetChecker.isExactlyType(targetType)) {
-      output += '$optionalQuestion.toSet()';
+      output = optionalQuestion
+          ? output.nullSafeProperty('toSet').call([])
+          : output.property('toSet').call([]);
     }
 
     return output;

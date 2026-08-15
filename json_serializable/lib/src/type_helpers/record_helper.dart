@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide RecordType;
 import 'package:source_helper/source_helper.dart';
 
 import '../type_helper.dart';
@@ -16,28 +17,30 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
   ) {
     if (targetType is! RecordType) return null;
 
-    final items = <Object>[];
+    final positionalItems = <Expression>[];
+    final namedItems = <String, Expression>{};
 
     const paramName = r'$jsonValue';
 
     var index = 1;
     for (var field in targetType.positionalFields) {
       final indexer = escapeDartString('\$$index');
-      items.add(
-        toCodeString(context.deserialize(field.type, '$paramName[$indexer]')),
+      final val = context.deserialize(field.type, '$paramName[$indexer]');
+      positionalItems.add(
+        val is Expression ? val : CodeExpression(Code(toCodeString(val))),
       );
       index++;
     }
     for (var field in targetType.namedFields) {
       final indexer = escapeDartString(field.name);
-      final val = toCodeString(
-        context.deserialize(field.type, '$paramName[$indexer]'),
-      );
-      items.add('${field.name}: $val');
+      final val = context.deserialize(field.type, '$paramName[$indexer]');
+      namedItems[field.name] = val is Expression
+          ? val
+          : CodeExpression(Code(toCodeString(val)));
     }
 
-    if (items.isEmpty) {
-      return '()';
+    if (positionalItems.isEmpty && namedItems.isEmpty) {
+      return literalRecord([], {});
     }
 
     context.addMember(
@@ -47,18 +50,21 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
       ),
     );
 
-    final recordLiteral = '(${items.map((e) => '$e,').join()})';
+    final recordLiteral = literalRecord(positionalItems, namedItems);
 
     final helperName = _recordConvertName(
       nullable: targetType.isNullableType,
       anyMap: context.config.anyMap,
     );
 
-    return '''
-$helperName(
-  $expression,
-  ($paramName) => $recordLiteral,
-)''';
+    final closure = Method(
+      (m) => m
+        ..requiredParameters.add(Parameter((p) => p..name = paramName))
+        ..lambda = true
+        ..body = recordLiteral.code,
+    ).closure;
+
+    return refer(helperName).call([CodeExpression(Code(expression)), closure]);
   }
 
   @override
@@ -71,30 +77,42 @@ $helperName(
 
     final maybeBang = targetType.isNullableType ? '!' : '';
 
-    final items = <Object>[];
+    final mapEntries = <Expression, Expression>{};
 
     var index = 1;
     for (var field in targetType.positionalFields) {
-      final indexer = escapeDartString('\$$index');
-      final val = toCodeString(
-        context.serialize(field.type, '$expression$maybeBang.\$$index'),
+      final indexer = literalString('\$$index', raw: true);
+      final val = context.serialize(
+        field.type,
+        '$expression$maybeBang.\$$index',
       );
-      items.add('$indexer:$val');
+      mapEntries[indexer] = val is Expression
+          ? val
+          : CodeExpression(Code(toCodeString(val)));
       index++;
     }
     for (var field in targetType.namedFields) {
-      final indexer = escapeDartString(field.name);
-      final key = toCodeString(
-        context.serialize(field.type, '$expression$maybeBang.${field.name}'),
+      final indexer = literalString(field.name);
+      final val = context.serialize(
+        field.type,
+        '$expression$maybeBang.${field.name}',
       );
-      items.add('$indexer:$key');
+      mapEntries[indexer] = val is Expression
+          ? val
+          : CodeExpression(Code(toCodeString(val)));
     }
 
-    final mapValue = '<String, dynamic>{${items.map((e) => '$e,').join()}}';
+    final mapLiteral = literalMap(
+      mapEntries,
+      refer('String'),
+      refer('dynamic'),
+    );
 
     return targetType.isNullableType
-        ? ifNullOrElse(expression, 'null', mapValue)
-        : mapValue;
+        ? refer(
+            expression,
+          ).equalTo(literalNull).conditional(literalNull, mapLiteral)
+        : mapLiteral;
   }
 }
 

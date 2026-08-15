@@ -262,34 +262,39 @@ String toCodeString(Object? obj) {
 
 Object? defaultDecodeLogic(
   DartType targetType,
-  String expression, {
+  Object expression, {
   bool defaultProvided = false,
 }) {
+  final exprStr = toCodeString(expression);
+  final expr = expression is Expression
+      ? expression
+      : CodeExpression(Code(exprStr));
+
   if (targetType.isDartCoreObject && !targetType.isNullableType) {
     final question = defaultProvided ? '?' : '';
     // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
     // for unparenthesized argument cast.
-    return CodeExpression(Code('$expression as Object$question'));
+    return CodeExpression(Code('$exprStr as Object$question'));
   } else if (targetType.isDartCoreObject || targetType is DynamicType) {
     // just return it as-is. We'll hope it's safe.
-    return CodeExpression(Code(expression));
+    return expr;
   } else if (targetType.isDartCoreDouble) {
     final targetTypeNullable = defaultProvided || targetType.isNullableType;
     final numType = targetTypeNullable ? refer('num?') : refer('num');
     return targetTypeNullable
-        ? refer(expression).asA(numType).nullSafeProperty('toDouble').call([])
-        : refer(expression).asA(numType).property('toDouble').call([]);
+        ? expr.asA(numType).nullSafeProperty('toDouble').call([])
+        : expr.asA(numType).property('toDouble').call([]);
   } else if (targetType.isDartCoreInt) {
     final targetTypeNullable = defaultProvided || targetType.isNullableType;
     final numType = targetTypeNullable ? refer('num?') : refer('num');
     return targetTypeNullable
-        ? refer(expression).asA(numType).nullSafeProperty('toInt').call([])
-        : refer(expression).asA(numType).property('toInt').call([]);
+        ? expr.asA(numType).nullSafeProperty('toInt').call([])
+        : expr.asA(numType).property('toInt').call([]);
   } else if (simpleJsonTypeChecker.isAssignableFromType(targetType)) {
     final typeCode = typeToCode(targetType, forceNullable: defaultProvided);
     // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
     // for unparenthesized argument cast.
-    return CodeExpression(Code('$expression as $typeCode'));
+    return CodeExpression(Code('$exprStr as $typeCode'));
   }
 
   return null;

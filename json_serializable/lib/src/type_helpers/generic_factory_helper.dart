@@ -16,7 +16,7 @@ class GenericFactoryHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) {
     if (context.config.genericArgumentFactories &&
@@ -24,9 +24,10 @@ class GenericFactoryHelper extends TypeHelper<TypeHelperContextWithConfig> {
       final toJsonFunc = toJsonForType(targetType);
       if (targetType.isNullableType) {
         context.addMember(_toJsonHelper);
-        return refer(
-          _toJsonHelperName,
-        ).call([CodeExpression(Code(expression)), refer(toJsonFunc)]);
+        final expr = expression is Expression
+            ? expression
+            : CodeExpression(Code(toCodeString(expression)));
+        return refer(_toJsonHelperName).call([expr, refer(toJsonFunc)]);
       }
 
       return LambdaResult(expression, toJsonFunc);
@@ -38,7 +39,7 @@ class GenericFactoryHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -48,9 +49,10 @@ class GenericFactoryHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
       if (targetType.isNullableType) {
         context.addMember(_fromJsonHelper);
-        return refer(
-          _fromJsonHelperName,
-        ).call([CodeExpression(Code(expression)), refer(fromJsonFunc)]);
+        final expr = expression is Expression
+            ? expression
+            : CodeExpression(Code(toCodeString(expression)));
+        return refer(_fromJsonHelperName).call([expr, refer(fromJsonFunc)]);
       }
 
       return LambdaResult(expression, fromJsonFunc);

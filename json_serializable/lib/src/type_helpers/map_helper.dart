@@ -21,7 +21,7 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) {
     if (!coreMapTypeChecker.isAssignableFromType(targetType)) {
@@ -33,7 +33,8 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final keyType = args[0];
     final valueType = args[1];
 
-    _checkSafeKeyType(expression, keyType);
+    final exprStr = toCodeString(expression);
+    _checkSafeKeyType(exprStr, keyType);
 
     final subFieldValue = context.serialize(valueType, closureArg);
     final subFieldValueStr = toCodeString(subFieldValue);
@@ -43,10 +44,12 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final subKeyValueStr = toCodeString(subKeyValue);
 
     if (closureArg == subFieldValueStr && _keyParam == subKeyValueStr) {
-      return CodeExpression(Code(expression));
+      return expression is Expression
+          ? expression
+          : CodeExpression(Code(exprStr));
     }
 
-    final target = refer(expression);
+    final target = expression is Expression ? expression : refer(exprStr);
     final mapProperty = targetType.isNullableType
         ? target.nullSafeProperty('map')
         : target.property('map');
@@ -76,7 +79,7 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -89,7 +92,8 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final keyArg = typeArgs.first;
     final valueArg = typeArgs.last;
 
-    _checkSafeKeyType(expression, keyArg);
+    final exprStr = toCodeString(expression);
+    _checkSafeKeyType(exprStr, keyArg);
 
     final valueArgIsAny =
         valueArg is DynamicType ||
@@ -105,7 +109,7 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
           if (keyArg.isLikeDynamic) {
             // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
             // for unparenthesized argument cast.
-            return CodeExpression(Code('$expression as Map$optionalQuestion'));
+            return CodeExpression(Code('$exprStr as Map$optionalQuestion'));
           }
         } else {
           // this is the trivial case. Do a runtime cast to the known type of
@@ -113,7 +117,7 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
           // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
           // for unparenthesized argument cast.
           return CodeExpression(
-            Code('$expression as Map<String, dynamic>$optionalQuestion'),
+            Code('$exprStr as Map<String, dynamic>$optionalQuestion'),
           );
         }
       }
@@ -129,7 +133,7 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
         // for unparenthesized argument cast.
         return refer(
           'Map<String, $valueString>',
-        ).property('from').call([CodeExpression(Code('$expression as Map'))]);
+        ).property('from').call([CodeExpression(Code('$exprStr as Map'))]);
       }
     }
 
@@ -158,17 +162,14 @@ class MapHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     final toFromString = _forType(keyArg);
     if (toFromString != null) {
-      keyUsage = toFromString.deserialize(
-        keyArg,
-        toCodeString(keyUsage),
-        false,
-        true,
-      )!;
+      keyUsage = toFromString.deserialize(keyArg, keyUsage, false, true)!;
     }
 
     final mapTypeStr = context.config.anyMap ? 'Map' : 'Map<String, dynamic>';
     final castType = refer('$mapTypeStr${targetTypeIsNullable ? '?' : ''}');
-    final target = refer(expression).asA(castType);
+    final target = expression is Expression
+        ? expression.asA(castType)
+        : refer(exprStr).asA(castType);
     final mapProperty = targetTypeIsNullable
         ? target.nullSafeProperty('map')
         : target.property('map');

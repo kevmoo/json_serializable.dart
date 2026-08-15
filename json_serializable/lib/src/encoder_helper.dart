@@ -66,7 +66,7 @@ mixin EncodeHelper implements HelperCore {
 
             m
               ..lambda = true
-              ..body = Code(_serializeField(fe, _toJsonParamName));
+              ..body = Code(_serializeField(fe, refer(_toJsonParamName)));
           }),
         ),
       ),
@@ -162,13 +162,16 @@ mixin EncodeHelper implements HelperCore {
 
             if (usesExplicitJsonNullWhenNonNullField(jsonKeyFor(field))) {
               final access = _fieldAccess(field);
-              final valueExpression = _serializePatchField(field, 'value');
+              final valueExpression = _serializePatchField(
+                field,
+                refer('value'),
+              );
               return '  if ($access case final value?) '
                   '$keyExpression: $valueExpression';
             }
 
-            final access = _fieldAccess(field);
-            final valueExpression = _serializeField(field, access);
+            final accessExpr = refer(_toJsonParamName).property(field.name!);
+            final valueExpression = _serializeField(field, accessExpr);
             final maybeQuestion = _canWriteJsonWithoutNullCheck(field)
                 ? ''
                 : '?';
@@ -185,7 +188,7 @@ mixin EncodeHelper implements HelperCore {
 
   static const _toJsonParamName = 'instance';
 
-  String _serializeField(FieldElement field, String accessExpression) {
+  String _serializeField(FieldElement field, Object accessExpression) {
     try {
       final res = getHelperContext(
         field,
@@ -199,7 +202,7 @@ mixin EncodeHelper implements HelperCore {
     }
   }
 
-  String _serializePatchField(FieldElement field, String accessExpression) {
+  String _serializePatchField(FieldElement field, Object accessExpression) {
     try {
       final type = field.type.promoteNonNullable();
       final res = getHelperContext(field).serialize(type, accessExpression);

@@ -49,7 +49,7 @@ class TypeHelperCtx
   }
 
   @override
-  Object? serialize(DartType targetType, String expression) => _run(
+  Object? serialize(DartType targetType, Object expression) => _run(
     targetType,
     expression,
     (TypeHelper th) => th.serialize(targetType, expression, this),
@@ -58,7 +58,7 @@ class TypeHelperCtx
   @override
   Object deserialize(
     DartType targetType,
-    String expression, {
+    Object expression, {
     String? defaultValue,
   }) {
     final value = _run(
@@ -82,7 +82,7 @@ class TypeHelperCtx
   /// for PATCH tri-state fields, so explicit `null` is passed to `fromJson`.
   Object deserializePresentJsonValue(
     DartType targetType,
-    String expression, {
+    Object expression, {
     String? defaultValue,
   }) {
     final value = _run(
@@ -97,15 +97,17 @@ class TypeHelperCtx
 
   Object _run(
     DartType targetType,
-    String expression,
+    Object expression,
     Object? Function(TypeHelper) invoke,
   ) =>
       _helperCore.allTypeHelpers
               .map(invoke)
               .firstWhere(
                 (r) => r != null,
-                orElse: () =>
-                    throw UnsupportedTypeError(targetType, expression),
+                orElse: () => throw UnsupportedTypeError(
+                  targetType,
+                  toCodeString(expression),
+                ),
               )
           as Object;
 }

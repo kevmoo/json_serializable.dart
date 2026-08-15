@@ -257,7 +257,7 @@ class _ConfigLogger implements TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -268,7 +268,7 @@ class _ConfigLogger implements TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) {
     configurations.add(context.config.toJsonSerializable());

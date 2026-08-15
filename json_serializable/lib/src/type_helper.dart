@@ -18,11 +18,11 @@ abstract class TypeHelperContext {
 
   /// [expression] may be just the name of the field or it may an expression
   /// representing the serialization of a value.
-  Object? serialize(DartType fieldType, String expression);
+  Object? serialize(DartType fieldType, Object expression);
 
   /// [expression] may be just the name of the field or it may an expression
   /// representing the serialization of a value.
-  Object? deserialize(DartType fieldType, String expression);
+  Object? deserialize(DartType fieldType, Object expression);
 
   /// Adds [memberContent] to the set of generated, top-level members.
   void addMember(String memberContent);
@@ -41,45 +41,15 @@ abstract class TypeHelper<T extends TypeHelperContext> {
   /// object of type [targetType].
   ///
   /// If [targetType] is not supported, returns `null`.
-  ///
-  /// Let's say you want to serialize a class `Foo` as just its `id` property
-  /// of type `int`.
-  ///
-  /// Treating [expression] as a opaque Dart expression, the [serialize]
-  /// implementation could be a simple as:
-  ///
-  /// ```dart
-  /// String serialize(DartType targetType, String expression) =>
-  ///   "$expression.id";
-  /// ```.
-  Object? serialize(DartType targetType, String expression, T context);
+  Object? serialize(DartType targetType, Object expression, T context);
 
   /// Returns Dart code that deserializes an [expression] representing a JSON
   /// literal to into [targetType].
   ///
   /// If [targetType] is not supported, returns `null`.
-  ///
-  /// Let's say you want to deserialize a class `Foo` by taking an `int` stored
-  /// in a JSON literal and calling the `Foo.fromInt` constructor.
-  ///
-  /// Treating [expression] as a opaque Dart expression representing a JSON
-  /// literal, the [deserialize] implementation could be a simple as:
-  ///
-  /// ```dart
-  /// String deserialize(DartType targetType, String expression) =>
-  ///   "new Foo.fromInt($expression)";
-  /// ```.
-  ///
-  /// Note that [targetType] is not used here. If you wanted to support many
-  /// types of [targetType] you could write:
-  ///
-  /// ```dart
-  /// String deserialize(DartType targetType, String expression) =>
-  ///   "new ${targetType.name}.fromInt($expression)";
-  /// ```.
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     T context,
     bool defaultProvided,
   );

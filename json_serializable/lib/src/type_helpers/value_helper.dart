@@ -3,6 +3,7 @@
 // BSD-style license that can be found in the LICENSE file.
 
 import 'package:analyzer/dart/element/type.dart';
+import 'package:code_builder/code_builder.dart' hide RecordType;
 
 import '../shared_checkers.dart';
 import '../type_helper.dart';
@@ -14,15 +15,17 @@ class ValueHelper extends TypeHelper {
   const ValueHelper();
 
   @override
-  String? serialize(
+  Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
   ) {
     if (targetType.isDartCoreObject ||
         targetType is DynamicType ||
         simpleJsonTypeChecker.isAssignableFromType(targetType)) {
-      return expression;
+      return expression is Expression
+          ? expression
+          : CodeExpression(Code(toCodeString(expression)));
     }
 
     return null;
@@ -31,7 +34,7 @@ class ValueHelper extends TypeHelper {
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) => defaultDecodeLogic(

@@ -13,9 +13,9 @@ class BigIntHelper extends TypeHelper {
   const BigIntHelper();
 
   @override
-  String? serialize(
+  Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
   ) =>
       bigIntString.serialize(targetType, expression, targetType.isNullableType);
@@ -23,7 +23,7 @@ class BigIntHelper extends TypeHelper {
   @override
   DefaultContainer? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) => bigIntString.deserialize(

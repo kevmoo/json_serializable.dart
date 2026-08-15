@@ -29,7 +29,7 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) {
     if (!_canSerialize(context.config, targetType)) {
@@ -60,21 +60,24 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
       );
     }
 
+    final target = expression is Expression
+        ? expression
+        : refer(toCodeString(expression));
+
     if (context.config.explicitToJson || toJsonArgs.isNotEmpty) {
-      final target = refer(expression);
       final prop = interfaceType.isNullableType
           ? target.nullSafeProperty('toJson')
           : target.property('toJson');
       final posArgs = toJsonArgs.map((a) => CodeExpression(Code(a))).toList();
       return prop.call(posArgs);
     }
-    return CodeExpression(Code(expression));
+    return target;
   }
 
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -88,7 +91,10 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
         .where((ce) => ce.name == 'fromJson')
         .singleOrNull;
 
-    var output = expression;
+    var output = expression is Expression
+        ? expression
+        : CodeExpression(Code(toCodeString(expression)));
+
     if (fromJsonCtor != null) {
       final positionalParams = fromJsonCtor.formalParameters
           .where((element) => element.isPositional)
@@ -111,10 +117,11 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
         }
       }
 
-      output = toCodeString(context.deserialize(asCastType, output));
+      final deserialized = context.deserialize(asCastType, output);
+      final deserializedStr = toCodeString(deserialized);
 
       final args = [
-        output,
+        deserializedStr,
         ..._helperParams(
           context.deserialize,
           _decodeHelper,
@@ -124,12 +131,14 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
         ),
       ];
 
-      output = args.join(', ');
+      output = CodeExpression(Code(args.join(', ')));
     } else if (_annotation(context.config, targetType)?.createFactory == true) {
       if (context.config.anyMap) {
-        output += ' as Map';
+        output = CodeExpression(Code('${toCodeString(output)} as Map'));
       } else {
-        output += ' as Map<String, dynamic>';
+        output = CodeExpression(
+          Code('${toCodeString(output)} as Map<String, dynamic>'),
+        );
       }
     } else {
       return null;
@@ -147,7 +156,7 @@ class JsonHelper extends TypeHelper<TypeHelperContextWithConfig> {
 }
 
 List<String> _helperParams(
-  Object? Function(DartType, String) execute,
+  Object? Function(DartType, Object) execute,
   TypeParameterType Function(FormalParameterElement, Element) paramMapper,
   InterfaceType type,
   Iterable<FormalParameterElement> positionalParams,

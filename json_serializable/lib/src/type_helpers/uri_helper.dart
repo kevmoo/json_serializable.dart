@@ -13,16 +13,16 @@ class UriHelper extends TypeHelper {
   const UriHelper();
 
   @override
-  String? serialize(
+  Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
   ) => uriString.serialize(targetType, expression, targetType.isNullableType);
 
   @override
   DefaultContainer? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) => uriString.deserialize(

@@ -22,7 +22,7 @@ class JsonConverterHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) {
     final converter = _typeConverter(targetType, context);
@@ -55,7 +55,7 @@ Json? $converterToJsonName<Json, Value>(
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -94,7 +94,7 @@ Expression _nullableJsonConverterLambdaResult(
   _JsonConvertData converter, {
   required String name,
   required DartType targetType,
-  required String expression,
+  required Object expression,
   required String callback,
 }) {
   final jsonDisplayString = typeToCode(converter.jsonType);
@@ -102,8 +102,12 @@ Expression _nullableJsonConverterLambdaResult(
       ? typeToCode(targetType)
       : typeToCode(converter.fieldType);
 
+  final expr = expression is Expression
+      ? expression
+      : CodeExpression(Code(toCodeString(expression)));
+
   return refer(name).call(
-    [CodeExpression(Code(expression)), refer(callback)],
+    [expr, refer(callback)],
     {},
     [refer(jsonDisplayString), refer(fieldTypeDisplayString)],
   );

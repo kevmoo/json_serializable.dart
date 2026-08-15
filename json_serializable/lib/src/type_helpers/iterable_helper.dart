@@ -19,7 +19,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) {
     if (!coreIterableTypeChecker.isAssignableFromType(targetType)) {
@@ -37,7 +37,9 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
 
     var optionalQuestion = targetType.isNullableType;
 
-    Expression expr = refer(expression);
+    var expr = expression is Expression
+        ? expression
+        : refer(toCodeString(expression));
 
     // In the case of trivial JSON types (int, String, etc), `subField`
     // will be identical to `substitute` – so no explicit mapping is needed.
@@ -70,7 +72,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) {
@@ -86,6 +88,7 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
     final itemSubValStr = toCodeString(itemSubVal);
 
     final targetTypeIsNullable = defaultProvided || targetType.isNullableType;
+    final exprStr = toCodeString(expression);
 
     // If `itemSubVal` is the same and it's not a Set, then we don't need to do
     // anything fancy
@@ -94,11 +97,12 @@ class IterableHelper extends TypeHelper<TypeHelperContextWithConfig> {
       final castType = 'List<dynamic>${targetTypeIsNullable ? '?' : ''}';
       // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
       // for unparenthesized argument cast.
-      return CodeExpression(Code('$expression as $castType'));
+      return CodeExpression(Code('$exprStr as $castType'));
     }
 
     final castType = refer('List<dynamic>${targetTypeIsNullable ? '?' : ''}');
-    var output = refer(expression).asA(castType);
+    final targetExpr = expression is Expression ? expression : refer(exprStr);
+    var output = targetExpr.asA(castType);
 
     var optionalQuestion = targetTypeIsNullable;
 

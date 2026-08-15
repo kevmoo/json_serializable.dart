@@ -11,7 +11,7 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   Object? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
     bool defaultProvided,
   ) {
@@ -64,28 +64,30 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
         ..body = recordLiteral.code,
     ).closure;
 
-    return refer(helperName).call([CodeExpression(Code(expression)), closure]);
+    final expr = expression is Expression
+        ? expression
+        : CodeExpression(Code(toCodeString(expression)));
+
+    return refer(helperName).call([expr, closure]);
   }
 
   @override
   Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) {
     if (targetType is! RecordType) return null;
 
     final maybeBang = targetType.isNullableType ? '!' : '';
+    final exprStr = toCodeString(expression);
 
     final mapEntries = <Expression, Expression>{};
 
     var index = 1;
     for (var field in targetType.positionalFields) {
       final indexer = literalString('\$$index', raw: true);
-      final val = context.serialize(
-        field.type,
-        '$expression$maybeBang.\$$index',
-      );
+      final val = context.serialize(field.type, '$exprStr$maybeBang.\$$index');
       mapEntries[indexer] = val is Expression
           ? val
           : CodeExpression(Code(toCodeString(val)));
@@ -95,7 +97,7 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
       final indexer = literalString(field.name);
       final val = context.serialize(
         field.type,
-        '$expression$maybeBang.${field.name}',
+        '$exprStr$maybeBang.${field.name}',
       );
       mapEntries[indexer] = val is Expression
           ? val
@@ -108,10 +110,10 @@ class RecordHelper extends TypeHelper<TypeHelperContextWithConfig> {
       refer('dynamic'),
     );
 
+    final targetExpr = expression is Expression ? expression : refer(exprStr);
+
     return targetType.isNullableType
-        ? refer(
-            expression,
-          ).equalTo(literalNull).conditional(literalNull, mapLiteral)
+        ? targetExpr.equalTo(literalNull).conditional(literalNull, mapLiteral)
         : mapLiteral;
   }
 }

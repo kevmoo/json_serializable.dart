@@ -13,9 +13,9 @@ class DateTimeHelper extends TypeHelper<TypeHelperContextWithConfig> {
   const DateTimeHelper();
 
   @override
-  String? serialize(
+  Object? serialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContextWithConfig context,
   ) => context._dateTimeHelper.serialize(
     targetType,
@@ -26,7 +26,7 @@ class DateTimeHelper extends TypeHelper<TypeHelperContextWithConfig> {
   @override
   DefaultContainer? deserialize(
     DartType targetType,
-    String expression,
+    Object expression,
     TypeHelperContext context,
     bool defaultProvided,
   ) => dateTimeString.deserialize(

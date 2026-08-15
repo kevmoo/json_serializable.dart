@@ -7,6 +7,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:source_gen/source_gen.dart';
 
 import '../default_container.dart';
+import '../utils.dart';
 
 final bigIntString = ToFromStringHelper('BigInt.parse', 'toString()', 'BigInt');
 
@@ -47,21 +48,40 @@ class ToFromStringHelper {
 
   bool matches(DartType type) => _checker.isExactlyType(type);
 
-  String? serialize(DartType type, String expression, bool nullable) {
+  Object? serialize(DartType type, Object expression, bool nullable) {
     if (!matches(type)) {
       return null;
     }
 
-    if (nullable) {
-      expression = '$expression?';
+    final expr = expression is Expression
+        ? expression
+        : refer(toCodeString(expression));
+
+    if (_toString.endsWith('()')) {
+      final methodChain = _toString
+          .substring(0, _toString.length - 2)
+          .split('().')
+          .toList();
+      var current = expr;
+      for (var i = 0; i < methodChain.length; i++) {
+        final prop = methodChain[i];
+        if (i == 0 && nullable) {
+          current = current.nullSafeProperty(prop).call([]);
+        } else {
+          current = current.property(prop).call([]);
+        }
+      }
+      return current;
     }
 
-    return '$expression.$_toString';
+    return nullable
+        ? expr.nullSafeProperty(_toString)
+        : expr.property(_toString);
   }
 
   DefaultContainer? deserialize(
     DartType type,
-    String expression,
+    Object expression,
     bool nullable,
     bool isString,
   ) {
@@ -69,11 +89,14 @@ class ToFromStringHelper {
       return null;
     }
 
+    final exprStr = toCodeString(expression);
     // TODO: https://github.com/dart-lang/tools/issues/1140 - using CodeExpression
     // for unparenthesized argument cast in parse calls.
     final parseParam = isString
-        ? CodeExpression(Code(expression))
-        : CodeExpression(Code('$expression as String'));
+        ? (expression is Expression
+              ? expression
+              : CodeExpression(Code(exprStr)))
+        : CodeExpression(Code('$exprStr as String'));
 
     final output = refer(_parse).call([parseParam]);
 

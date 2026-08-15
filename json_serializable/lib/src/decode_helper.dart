@@ -263,7 +263,7 @@ mixin DecodeHelper implements HelperCore {
     final readValueFunc = jsonKey.readValueFunctionName;
     final patchTriState = usesExplicitJsonNullWhenNonNullField(jsonKey);
 
-    String deserialize(String expression, {bool patchPresentValue = false}) {
+    String deserialize(Object expression, {bool patchPresentValue = false}) {
       final res = patchPresentValue
           ? contextHelper.deserializePresentJsonValue(
               targetType,
@@ -283,14 +283,14 @@ mixin DecodeHelper implements HelperCore {
     String value;
     try {
       if (config.checked) {
-        final deserializeV = deserialize('v');
+        final deserializeV = deserialize(refer('v'));
         if (patchTriState) {
           validateExplicitJsonNullDeserialize(field, contextHelper, targetType);
           final triStateBody = wrapPatchTriStateCheckedConvert(
             mapExpression: 'json',
             jsonKeyName: jsonKeyName,
             absentExpression: 'null',
-            presentExpression: deserialize('v', patchPresentValue: true),
+            presentExpression: deserialize(refer('v'), patchPresentValue: true),
           );
           value = triStateBody;
         } else {
@@ -309,8 +309,10 @@ mixin DecodeHelper implements HelperCore {
         );
 
         final jsonValueExpression = readValueFunc == null
-            ? 'json[$jsonKeyName]'
-            : '$readValueFunc(json, $jsonKeyName)';
+            ? refer('json').index(CodeExpression(Code(jsonKeyName)))
+            : refer(
+                readValueFunc,
+              ).call([refer('json'), CodeExpression(Code(jsonKeyName))]);
 
         final deserializeValue = deserialize(
           jsonValueExpression,

@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: cascade_invocations, lines_longer_than_80_chars, text_direction_code_point_in_literal, inference_failure_on_function_invocation, inference_failure_on_collection_literal
+// ignore_for_file: lines_longer_than_80_chars, text_direction_code_point_in_literal, inference_failure_on_function_invocation, inference_failure_on_collection_literal
 
 part of 'json_test_example.dart';
 
@@ -64,34 +64,33 @@ const _$CategoryEnumMap = {
 
 Order _$OrderFromJson(Map<String, dynamic> json) {
   $checkKeys(json, disallowNullValues: const ['count']);
-  final val = Order.custom(
-    $enumDecodeNullable(_$CategoryEnumMap, json['category']),
-    (json['items'] as List<dynamic>?)?.map(
-      (e) => Item.fromJson(e as Map<String, dynamic>),
-    ),
-  );
-  val.count = (json['count'] as num?)?.toInt();
-  val.isRushed = json['isRushed'] as bool?;
-  val.duration = json['duration'] == null
-      ? null
-      : Duration(microseconds: (json['duration'] as num).toInt());
-  val.platform = json['platform'] == null
-      ? null
-      : Platform.fromJson(json['platform'] as String);
-  val.altPlatforms = (json['altPlatforms'] as Map<String, dynamic>?)?.map(
-    (k, e) => MapEntry(k, Platform.fromJson(e as String)),
-  );
-  val.homepage = json['homepage'] == null
-      ? null
-      : Uri.parse(json['homepage'] as String);
-  val.statusCode =
-      $enumDecodeNullable(
-        _$StatusCodeEnumMap,
-        json['status_code'],
-        unknownValue: StatusCode.unknown,
-      ) ??
-      StatusCode.success;
-  return val;
+  return Order.custom(
+      $enumDecodeNullable(_$CategoryEnumMap, json['category']),
+      (json['items'] as List<dynamic>?)?.map(
+        (e) => Item.fromJson(e as Map<String, dynamic>),
+      ),
+    )
+    ..count = (json['count'] as num?)?.toInt()
+    ..isRushed = json['isRushed'] as bool?
+    ..duration = json['duration'] == null
+        ? null
+        : Duration(microseconds: (json['duration'] as num).toInt())
+    ..platform = json['platform'] == null
+        ? null
+        : Platform.fromJson(json['platform'] as String)
+    ..altPlatforms = (json['altPlatforms'] as Map<String, dynamic>?)?.map(
+      (k, e) => MapEntry(k, Platform.fromJson(e as String)),
+    )
+    ..homepage = json['homepage'] == null
+        ? null
+        : Uri.parse(json['homepage'] as String)
+    ..statusCode =
+        $enumDecodeNullable(
+          _$StatusCodeEnumMap,
+          json['status_code'],
+          unknownValue: StatusCode.unknown,
+        ) ??
+        StatusCode.success;
 }
 
 Map<String, dynamic> _$OrderToJson(Order instance) => <String, dynamic>{

@@ -145,41 +145,19 @@ mixin DecodeHelper implements HelperCore {
             ..add(data.content.returned.statement);
         }
       } else {
-        final fieldCache = {
-          for (final field in data.fieldsToSet) field: deserializeFun(field),
-        };
-
-        final hasClashingQuestionMark = fieldCache.values.any(
-          (v) => v.trim().endsWith('?'),
+        final expr = data.fieldsToSet.fold<Expression>(
+          data.content,
+          (current, field) => current
+              .cascade(field)
+              .assign(CodeExpression(Code('${deserializeFun(field)} '))),
         );
 
-        if (hasClashingQuestionMark) {
+        if (checks.isEmpty) {
+          lambdaExpr = expr;
+        } else {
           fromJsonLines
             ..addAll(checks.map((c) => Code(c.trim())))
-            ..add(
-              Code(
-                'final val = '
-                '${data.content.accept(DartEmitter())};',
-              ),
-            );
-          for (final field in data.fieldsToSet) {
-            fromJsonLines.add(Code('val.$field = ${fieldCache[field]};'));
-          }
-          fromJsonLines.add(refer('val').returned.statement);
-        } else {
-          final expr = data.fieldsToSet.fold<Expression>(
-            data.content,
-            (current, field) =>
-                current.cascade('$field = ${fieldCache[field]}'),
-          );
-
-          if (checks.isEmpty) {
-            lambdaExpr = expr;
-          } else {
-            fromJsonLines
-              ..addAll(checks.map((c) => Code(c.trim())))
-              ..add(expr.returned.statement);
-          }
+            ..add(expr.returned.statement);
         }
       }
     }

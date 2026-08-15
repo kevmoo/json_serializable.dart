@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-// ignore_for_file: cascade_invocations, lines_longer_than_80_chars, text_direction_code_point_in_literal, inference_failure_on_function_invocation, inference_failure_on_collection_literal
+// ignore_for_file: lines_longer_than_80_chars, text_direction_code_point_in_literal, inference_failure_on_function_invocation, inference_failure_on_collection_literal
 
 part of 'kitchen_sink.dart';
 
@@ -8,112 +8,112 @@ part of 'kitchen_sink.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-KitchenSink _$KitchenSinkFromJson(Map<String, dynamic> json) {
-  final val = KitchenSink(
-    ctorValidatedNo42: (json['no-42'] as num?)?.toInt(),
-    iterable: _valueAccessor(json, 'iterable') as List<dynamic>?,
-    dynamicIterable: json['dynamicIterable'] as List<dynamic>?,
-    objectIterable: (json['objectIterable'] as List<dynamic>?)?.map(
-      (e) => e as Object,
-    ),
-    intIterable: (json['intIterable'] as List<dynamic>?)?.map(
-      (e) => (e as num).toInt(),
-    ),
-    dateTimeIterable: (json['datetime-iterable'] as List<dynamic>?)?.map(
-      (e) => DateTime.parse(e as String),
-    ),
-  );
-  val.dateTime = json['dateTime'] == null
-      ? null
-      : DateTime.parse(json['dateTime'] as String);
-  val.bigInt = json['bigInt'] == null
-      ? null
-      : BigInt.parse(json['bigInt'] as String);
-  val.set = (json['set'] as List<dynamic>).toSet();
-  val.dynamicSet = (json['dynamicSet'] as List<dynamic>).toSet();
-  val.objectSet = (json['objectSet'] as List<dynamic>)
-      .map((e) => e as Object)
-      .toSet();
-  val.intSet = (json['intSet'] as List<dynamic>)
-      .map((e) => (e as num).toInt())
-      .toSet();
-  val.dateTimeSet = (json['dateTimeSet'] as List<dynamic>)
-      .map((e) => DateTime.parse(e as String))
-      .toSet();
-  val.list = json['list'] as List<dynamic>;
-  val.dynamicList = json['dynamicList'] as List<dynamic>;
-  val.objectList = (json['objectList'] as List<dynamic>)
-      .map((e) => e as Object)
-      .toList();
-  val.intList = (json['intList'] as List<dynamic>)
-      .map((e) => (e as num).toInt())
-      .toList();
-  val.dateTimeList = (json['dateTimeList'] as List<dynamic>)
-      .map((e) => DateTime.parse(e as String))
-      .toList();
-  val.nullableSimpleObjectList =
-      (json['nullableSimpleObjectList'] as List<dynamic>)
-          .map(
-            (e) => e == null
-                ? null
-                : SimpleObject.fromJson(e as Map<String, dynamic>),
-          )
-          .toList();
-  val.map = json['map'] as Map<String, dynamic>;
-  val.stringStringMap = Map<String, String>.from(
-    json['stringStringMap'] as Map,
-  );
-  val.dynamicIntMap = Map<String, int>.from(json['dynamicIntMap'] as Map);
-  val.objectDateTimeMap = (json['objectDateTimeMap'] as Map<String, dynamic>)
-      .map((k, e) => MapEntry(k, DateTime.parse(e as String)));
-  val.nullableSimpleObjectMap =
-      (json['nullableSimpleObjectMap'] as Map<String, dynamic>).map(
-        (k, e) => MapEntry(
-          k,
-          e == null ? null : SimpleObject.fromJson(e as Map<String, dynamic>),
+KitchenSink _$KitchenSinkFromJson(Map<String, dynamic> json) =>
+    KitchenSink(
+        ctorValidatedNo42: (json['no-42'] as num?)?.toInt(),
+        iterable: _valueAccessor(json, 'iterable') as List<dynamic>?,
+        dynamicIterable: json['dynamicIterable'] as List<dynamic>?,
+        objectIterable: (json['objectIterable'] as List<dynamic>?)?.map(
+          (e) => e as Object,
         ),
-      );
-  val.crazyComplex = (json['crazyComplex'] as List<dynamic>)
-      .map(
-        (e) => (e as Map<String, dynamic>?)?.map(
-          (k, e) => MapEntry(
-            k,
-            (e as Map<String, dynamic>?)?.map(
-              (k, e) => MapEntry(
-                k,
-                (e as List<dynamic>?)
-                    ?.map(
-                      (e) => (e as List<dynamic>?)
-                          ?.map((e) => DateTime.parse(e as String))
-                          .toList(),
-                    )
-                    .toList(),
-              ),
-            ),
-          ),
+        intIterable: (json['intIterable'] as List<dynamic>?)?.map(
+          (e) => (e as num).toInt(),
+        ),
+        dateTimeIterable: (json['datetime-iterable'] as List<dynamic>?)?.map(
+          (e) => DateTime.parse(e as String),
         ),
       )
-      .toList();
-  val.val = Map<String, bool>.from(json['val'] as Map);
-  val.writeNotNull = json['writeNotNull'] as bool?;
-  val.string = KitchenSink._trickyValueAccessor(json, r'$string') as String?;
-  val.simpleObject = SimpleObject.fromJson(
-    json['simpleObject'] as Map<String, dynamic>,
-  );
-  val.strictKeysObject = StrictKeysObject.fromJson(
-    json['strictKeysObject'] as Map<String, dynamic>,
-  );
-  val.validatedPropertyNo42 = (json['validatedPropertyNo42'] as num?)?.toInt();
-  val.recordField = _$recordConvertNullable(
-    json['recordField'],
-    ($jsonValue) => (
-      ($jsonValue[r'$1'] as num).toInt(),
-      $jsonValue[r'$2'] as String,
-      truth: $jsonValue['truth'] as bool,
-    ),
-  );
-  return val;
-}
+      ..dateTime = json['dateTime'] == null
+          ? null
+          : DateTime.parse(json['dateTime'] as String)
+      ..bigInt = json['bigInt'] == null
+          ? null
+          : BigInt.parse(json['bigInt'] as String)
+      ..set = (json['set'] as List<dynamic>).toSet()
+      ..dynamicSet = (json['dynamicSet'] as List<dynamic>).toSet()
+      ..objectSet = (json['objectSet'] as List<dynamic>)
+          .map((e) => e as Object)
+          .toSet()
+      ..intSet = (json['intSet'] as List<dynamic>)
+          .map((e) => (e as num).toInt())
+          .toSet()
+      ..dateTimeSet = (json['dateTimeSet'] as List<dynamic>)
+          .map((e) => DateTime.parse(e as String))
+          .toSet()
+      ..list = json['list'] as List<dynamic>
+      ..dynamicList = json['dynamicList'] as List<dynamic>
+      ..objectList = (json['objectList'] as List<dynamic>)
+          .map((e) => e as Object)
+          .toList()
+      ..intList = (json['intList'] as List<dynamic>)
+          .map((e) => (e as num).toInt())
+          .toList()
+      ..dateTimeList = (json['dateTimeList'] as List<dynamic>)
+          .map((e) => DateTime.parse(e as String))
+          .toList()
+      ..nullableSimpleObjectList =
+          (json['nullableSimpleObjectList'] as List<dynamic>)
+              .map(
+                (e) => e == null
+                    ? null
+                    : SimpleObject.fromJson(e as Map<String, dynamic>),
+              )
+              .toList()
+      ..map = json['map'] as Map<String, dynamic>
+      ..stringStringMap = Map<String, String>.from(
+        json['stringStringMap'] as Map,
+      )
+      ..dynamicIntMap = Map<String, int>.from(json['dynamicIntMap'] as Map)
+      ..objectDateTimeMap = (json['objectDateTimeMap'] as Map<String, dynamic>)
+          .map((k, e) => MapEntry(k, DateTime.parse(e as String)))
+      ..nullableSimpleObjectMap =
+          (json['nullableSimpleObjectMap'] as Map<String, dynamic>).map(
+            (k, e) => MapEntry(
+              k,
+              e == null
+                  ? null
+                  : SimpleObject.fromJson(e as Map<String, dynamic>),
+            ),
+          )
+      ..crazyComplex = (json['crazyComplex'] as List<dynamic>)
+          .map(
+            (e) => (e as Map<String, dynamic>?)?.map(
+              (k, e) => MapEntry(
+                k,
+                (e as Map<String, dynamic>?)?.map(
+                  (k, e) => MapEntry(
+                    k,
+                    (e as List<dynamic>?)
+                        ?.map(
+                          (e) => (e as List<dynamic>?)
+                              ?.map((e) => DateTime.parse(e as String))
+                              .toList(),
+                        )
+                        .toList(),
+                  ),
+                ),
+              ),
+            ),
+          )
+          .toList()
+      ..val = Map<String, bool>.from(json['val'] as Map)
+      ..writeNotNull = json['writeNotNull'] as bool?
+      ..string = KitchenSink._trickyValueAccessor(json, r'$string') as String?
+      ..simpleObject = SimpleObject.fromJson(
+        json['simpleObject'] as Map<String, dynamic>,
+      )
+      ..strictKeysObject = StrictKeysObject.fromJson(
+        json['strictKeysObject'] as Map<String, dynamic>,
+      )
+      ..validatedPropertyNo42 = (json['validatedPropertyNo42'] as num?)?.toInt()
+      ..recordField = _$recordConvertNullable(
+        json['recordField'],
+        ($jsonValue) => (
+          ($jsonValue[r'$1'] as num).toInt(),
+          $jsonValue[r'$2'] as String,
+          truth: $jsonValue['truth'] as bool,
+        ),
+      );
 
 Map<String, dynamic> _$KitchenSinkToJson(
   KitchenSink instance,

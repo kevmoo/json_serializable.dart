@@ -80,12 +80,13 @@ mixin EncodeHelper implements HelperCore {
     return Field(
       (f) => f
         ..name = '_\$${element.name!.nonPrivate}FieldMap'
-        ..type = refer('Map<String, String>')
         ..modifier = FieldModifier.constant
         ..assignment = literalMap(
           Map.fromEntries(
             accessibleFieldSet.map((fe) => MapEntry(fe.name!, nameAccess(fe))),
           ),
+          refer('String'),
+          refer('String'),
         ).code,
     );
   }
